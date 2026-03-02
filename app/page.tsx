@@ -1,65 +1,127 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gradient-to-b from-white via-violet-50/30 to-white">
+      <div className="pt-24 pb-20">
+        {/* Hero */}
+        <div className="max-w-4xl mx-auto px-6 text-center mb-20">
+          <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
+            灵感引擎
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl md:text-2xl text-gray-600 mb-4 font-light">
+            AI 驱动的新媒体创作平台
+          </p>
+          <p className="text-base text-gray-500">
+            让每一个创意都能成为爆款
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Quick Start */}
+        <div className="max-w-6xl mx-auto px-6 mb-16">
+          <div className="bg-white rounded-2xl p-10 border border-black/5">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">快速开始</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { num: '1', label: '设置 IP 身份', color: 'from-violet-600 to-fuchsia-600' },
+                { num: '2', label: '建立内容库', color: 'from-emerald-600 to-teal-600' },
+                { num: '3', label: '发现爆款选题', color: 'from-amber-600 to-orange-600' },
+                { num: '4', label: 'AI 智能创作', color: 'from-rose-600 to-pink-600' },
+              ].map((step) => (
+                <div key={step.num} className="text-center">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${step.color} text-white rounded-xl flex items-center justify-center text-lg font-semibold mx-auto mb-3 shadow-sm`}>
+                    {step.num}
+                  </div>
+                  <p className="text-sm text-gray-600">{step.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </main>
+
+        {/* Features */}
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
+            {/* IP 设置 */}
+            <a
+              href="/ip-profile"
+              className="group relative bg-white rounded-2xl p-8 border border-black/5 hover:border-black/10 hover:shadow-lg transition-all duration-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                  🎭
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">IP 身份设置</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    打造独特的 IP 人设，定义你的内容风格和创作方向
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            {/* 内容库 */}
+            <a
+              href="/content-library"
+              className="group relative bg-white rounded-2xl p-8 border border-black/5 hover:border-black/10 hover:shadow-lg transition-all duration-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                  📚
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">内容库</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    沉淀你的创作素材，构建专属的内容知识库
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            {/* 选题灵感 */}
+            <a
+              href="/topics"
+              className="group relative bg-white rounded-2xl p-8 border border-black/5 hover:border-black/10 hover:shadow-lg transition-all duration-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                  💡
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">选题灵感库</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    AI 智能分析选题潜力，帮你找到下一个爆款
+                  </p>
+                </div>
+              </div>
+            </a>
+
+            {/* 内容创作 - 突出显示 */}
+            <a
+              href="/create"
+              className="group relative bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-8 border border-violet-500/20 hover:shadow-xl hover:shadow-violet-500/20 transition-all duration-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
+                  ✨
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-2">内容创作</h3>
+                  <p className="text-violet-100 text-sm leading-relaxed">
+                    一键生成高质量内容，让创作更高效
+                  </p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="max-w-6xl mx-auto px-6 mt-20 text-center">
+          <p className="text-sm text-gray-500">
+            有任何问题或建议？微信：
+            <span className="text-gray-900 font-medium ml-1">wangzherongxx</span>
+          </p>
+        </div>
+      </div>
     </div>
-  );
+  )
 }

@@ -7,7 +7,6 @@ export { default as Loading, Skeleton } from './Loading';
 export { ToastProvider, useToast } from './Toast';
 export { ErrorBoundary } from './ErrorBoundary';
 export { EmptyState } from './EmptyState';
-export { LoadingSpinner, LoadingPage, LoadingOverlay } from './Loading.tsx.new';
 
 export type { ButtonProps } from './Button';
 export type { InputProps } from './Input';

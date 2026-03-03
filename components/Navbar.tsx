@@ -54,6 +54,7 @@ export default function Navbar() {
     { href: '/content-library', label: '内容库', icon: '📚' },
     { href: '/create', label: '内容创作', icon: '✨' },
     { href: '/feedback', label: '反馈', icon: '💬' },
+    { href: '/help', label: '帮助', icon: '❓' },
   ]
 
   return (

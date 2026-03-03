@@ -1,6 +1,9 @@
+import WelcomeGuide from '@/components/WelcomeGuide'
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-violet-50/30 to-white">
+      <WelcomeGuide />
       <div className="pt-24 pb-20">
         {/* Hero */}
         <div className="max-w-4xl mx-auto px-6 text-center mb-20">
@@ -115,9 +118,24 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <div className="max-w-6xl mx-auto px-6 mt-20 text-center">
-          <p className="text-sm text-gray-500">
-            有任何问题或建议？微信：
+        <div className="max-w-6xl mx-auto px-6 mt-20">
+          <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-8 text-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">需要帮助？</h3>
+            <p className="text-gray-600 mb-4">
+              查看详细的使用指南，快速上手灵感引擎
+            </p>
+            <a
+              href="/help"
+              className="inline-block px-6 py-2 bg-white text-violet-600 rounded-lg hover:shadow-md transition-all font-medium"
+            >
+              查看使用指南
+            </a>
+          </div>
+
+          <p className="text-sm text-gray-500 text-center">
+            有任何问题或建议？
+            <a href="/feedback" className="text-violet-600 hover:underline ml-1">提交反馈</a>
+            {' '}或微信：
             <span className="text-gray-900 font-medium ml-1">wangzherongxx</span>
           </p>
         </div>

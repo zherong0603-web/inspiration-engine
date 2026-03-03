@@ -88,7 +88,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             灵感引擎
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700 font-medium">
             {isLogin ? '欢迎回来' : '开始你的创作之旅'}
           </p>
         </div>
@@ -127,20 +127,20 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">
                 {isLogin ? '邮箱 / 手机号' : '邮箱'}
               </label>
               <input
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-900 mb-1.5">
                 密码
               </label>
               <div className="relative">
@@ -148,7 +148,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
                   required
                 />
                 <button
@@ -173,32 +173,32 @@ export default function LoginPage() {
             {!isLogin && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-gray-900 mb-1.5">
                     用户名（可选）
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    邀请码 <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-900 mb-1.5">
+                    邀请码 <span className="text-red-600 font-bold">*</span>
                   </label>
                   <input
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                     placeholder="请输入8位邀请码"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white uppercase placeholder:text-gray-400"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm text-gray-900 bg-white uppercase placeholder:text-gray-500"
                     maxLength={8}
                     required
                   />
                   {searchParams.get('invite') && (
-                    <p className="text-xs text-emerald-600 mt-1">
+                    <p className="text-xs text-emerald-700 mt-1 font-medium">
                       ✓ 已自动填充邀请码
                     </p>
                   )}
@@ -207,7 +207,7 @@ export default function LoginPage() {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-sm">
+              <div className="bg-red-50 border-2 border-red-300 text-red-800 px-3 py-2 rounded-lg text-sm font-medium">
                 {error}
               </div>
             )}

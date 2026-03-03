@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start -p 3009",
     "lint": "eslint",
+    "setup": "tsx scripts/setup.ts",
     "db:init": "tsx scripts/init-db.ts",
+    "db:defaults": "tsx scripts/init-defaults.ts",
     "db:seed": "tsx scripts/seed-demo-data.ts",
     "db:studio": "prisma studio"
   },

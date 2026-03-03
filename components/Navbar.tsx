@@ -17,7 +17,7 @@ export default function Navbar() {
 
   useEffect(() => {
     fetchUser()
-  }, [])
+  }, [pathname]) // 当路由变化时重新获取用户信息
 
   async function fetchUser() {
     try {
@@ -25,15 +25,20 @@ export default function Navbar() {
       if (res.ok) {
         const data = await res.json()
         setUser(data.user)
+      } else {
+        setUser(null) // 如果获取失败，清除用户状态
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
+      setUser(null) // 如果出错，清除用户状态
     }
   }
 
   async function handleLogout() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null) // 清除本地用户状态
+      setShowUserMenu(false) // 关闭菜单
       router.push('/login')
       router.refresh()
     } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 // 获取反馈列表
 export async function GET(request: NextRequest) {
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     // 允许未登录用户提交反馈（匿名反馈）
+
+    // 反馈限流
+    const identifier = user?.id || request.headers.get('x-forwarded-for') || 'unknown'
+    if (!rateLimit(identifier, RATE_LIMITS.FEEDBACK)) {
+      return NextResponse.json(
+        { error: '反馈提交过于频繁，请稍后再试' },
+        { status: 429 }
+      )
+    }
 
     const body = await request.json()
     const { type, title, content, contact } = body

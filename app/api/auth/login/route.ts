@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyPassword, setUserSession } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  // 限流检查
+  const identifier = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  if (!rateLimit(identifier, RATE_LIMITS.LOGIN)) {
+    return NextResponse.json(
+      { error: '登录尝试过于频繁，请稍后再试' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { email, password } = body

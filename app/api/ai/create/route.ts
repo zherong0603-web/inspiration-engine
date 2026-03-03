@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { generateContent } from '@/lib/ai'
 import { getCurrentUser } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -10,6 +11,14 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
+    // AI 生成限流
+    if (!rateLimit(user.id, RATE_LIMITS.AI_GENERATE)) {
+      return NextResponse.json(
+        { error: 'AI 生成请求过于频繁，请稍后再试（每分钟最多 5 次）' },
+        { status: 429 }
+      )
     }
 
     const body = await request.json()

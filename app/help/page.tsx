@@ -5,8 +5,8 @@ export default function HelpPage() {
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">使用指南</h1>
 
-        {/* 快速开始 */}
-        <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      {/* 快速开始 */}
+      <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <span className="mr-2">🚀</span>
             快速开始
@@ -174,7 +174,6 @@ export default function HelpPage() {
             <p>• <strong>保持人设一致</strong>：确保 IP 设置准确，生成的内容才能保持风格统一</p>
           </div>
         </section>
-      </div>
     </div>
   )
 }

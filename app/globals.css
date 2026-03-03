@@ -120,3 +120,21 @@ html {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
 }
+
+/* 修复浏览器自动填充样式 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* 确保输入框文字可见 */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  color: #0f172a !important;
+}
+

@@ -16,10 +16,12 @@ export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
     fetchUser()
     checkAdmin()
+    fetchCredits()
   }, [pathname]) // 当路由变化时重新获取用户信息
 
   async function fetchUser() {
@@ -47,6 +49,18 @@ export default function Navbar() {
     } catch (error) {
       console.error('检查管理员权限失败:', error)
       setIsAdmin(false)
+    }
+  }
+
+  async function fetchCredits() {
+    try {
+      const res = await fetch('/api/user/credits', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setCredits(data.credits)
+      }
+    } catch (error) {
+      console.error('获取积分失败:', error)
     }
   }
 
@@ -107,6 +121,18 @@ export default function Navbar() {
             {/* User Menu */}
             {user && (
               <div className="relative ml-2">
+                {/* 积分显示 */}
+                {credits !== null && (
+                  <a
+                    href="/credits"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg mr-2 hover:shadow-md transition-all cursor-pointer"
+                    title="查看积分详情"
+                  >
+                    <span className="text-lg">💎</span>
+                    <span className="text-sm font-semibold text-amber-700">{credits}</span>
+                  </a>
+                )}
+
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"

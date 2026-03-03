@@ -84,7 +84,8 @@ export default function Home() {
 
           {/* 快速上手 - 4步流程 */}
           <div className="bg-white rounded-2xl p-10 border border-gray-200 shadow-sm mb-12">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">快速上手</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2 text-center">4 步创作爆款内容</h2>
+            <p className="text-gray-600 text-center mb-8">跟随步骤，快速上手 AI 创作</p>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Link href="/ip-profile" className="group">
                 <div className="text-center p-6 rounded-xl border-2 border-gray-200 hover:border-violet-500 hover:shadow-lg transition-all">

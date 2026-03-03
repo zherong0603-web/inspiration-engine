@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,205 +6,188 @@ datasource db {
   provider = "sqlite"
 }
 
-// IP 身份配置
-model IPProfile {
-  id          String   @id @default(cuid())
-  userId      String   // 所属用户
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String   // IP 名称
-  description String?  // IP 简介
-  persona     String   // IP 人设（JSON 格式）
-  style       String   // 内容风格
-  topics      String   // 擅长话题（JSON 数组）
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 内容库
-model Content {
-  id          String   @id @default(cuid())
-  userId      String   // 所属用户
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String   // 内容标题
-  category    String   // 分类（职场/家庭/生活等）
-  type        String   // 类型（视频/文章/笔记等）
-  content     String   // 内容正文
-  transcript  String?  // 视频逐字稿
-  tags        String   // 标签（JSON 数组）
-  metadata    String?  // 元数据（JSON）
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 创作历史
-model Creation {
-  id          String   @id @default(cuid())
-  userId      String   // 所属用户
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sourceIds   String   // 源内容 ID（JSON 数组）
-  prompt      String   // 创作提示词
-  result      String   // 生成结果
-  type        String   // 创作类型（二创/优化等）
-  status      String   // 状态（草稿/已发布等）
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 内容分类
-model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique // 分类名称
-  color     String?  // 颜色标识（可选）
-  icon      String?  // 图标（可选）
-  order     Int      @default(0) // 排序顺序
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// 内容类型
-model ContentType {
-  id        String   @id @default(cuid())
-  name      String   @unique // 类型名称
-  icon      String?  // 图标（可选）
-  order     Int      @default(0) // 排序顺序
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// 用户
-model User {
-  id            String   @id @default(cuid())
-  email         String   @unique // 邮箱
-  phone         String?  @unique // 手机号（备用登录方式）
-  password      String   // 密码（加密后）
-  name          String?  // 用户名
-  inviteCode    String?  @unique // 用户的邀请码（用于邀请他人）
-  invitedBy     String?  // 被谁邀请（邀请码）
-  isActive      Boolean  @default(true) // 是否激活
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // 关联关系
-  ipProfiles    IPProfile[]
-  contents      Content[]
-  creations     Creation[]
-  topicIdeas    TopicIdea[]
-  feedbacks     Feedback[]
-  activityLogs  ActivityLog[]
-}
-
-// 邀请码
-model InviteCode {
-  id          String   @id @default(cuid())
-  code        String   @unique // 邀请码
-  createdBy   String?  // 创建者用户ID
-  usedBy      String?  // 使用者用户ID
-  isUsed      Boolean  @default(false) // 是否已使用
-  expiresAt   DateTime? // 过期时间（可选）
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 选题灵感
-model TopicIdea {
-  id          String   @id @default(cuid())
-  userId      String   // 所属用户
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String   // 选题标题
-  description String?  // 选题描述
-  platform    String   @default("通用") // 目标平台（抖音/小红书/视频号/B站/通用）
-  category    String   // 分类（职场/生活/情感/知识等）
-  status      String   @default("待创作") // 状态：待创作/已创作/已放弃
-
-  // AI评估（简化）
-  aiScore     Int      @default(0)     // 爆款指数 0-100（唯一评分）
-  angles      String?  // 推荐角度（JSON数组，3个）
-  bestTime    String?  // 最佳时机
-  expectedViews String? // 预期数据
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 爆款案例库（方案C）
-model ViralCase {
-  id            String   @id @default(cuid())
-  title         String   // 标题
-  platform      String   // 平台（抖音/小红书/视频号等）
-  category      String   // 分类
-  content       String   // 内容/脚本
-  viewCount     Int      // 播放量/阅读量
-  likeCount     Int      // 点赞数
-  commentCount  Int      // 评论数
-  shareCount    Int      // 分享数
-  publishDate   DateTime // 发布日期
-  tags          String   // 标签（JSON数组）
-  structure     String?  // 脚本结构分析（JSON）
-  keyPoints     String?  // 关键要素（JSON数组）
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// IP 成功模板库（方案C）
-model IPTemplate {
-  id            String   @id @default(cuid())
-  name          String   // IP名称
-  category      String   // 类别（职场/情感/知识等）
-  persona       String   // 人设描述
-  style         String   // 风格特点
-  successCase   String   // 成功案例
-  keyStrategy   String   // 核心策略
-  targetAudience String  // 目标受众
-  contentThemes String   // 内容主题（JSON数组）
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// 脚本结构模板（方案C）
-model ScriptTemplate {
-  id            String   @id @default(cuid())
-  name          String   // 模板名称
-  type          String   // 类型（知识科普/故事/干货等）
-  structure     String   // 结构（JSON格式）
-  example       String   // 示例
-  usageCount    Int      @default(0) // 使用次数
-  successRate   Float    @default(0) // 成功率
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// 用户反馈
-model Feedback {
-  id          String   @id @default(cuid())
-  userId      String?  // 用户ID（可选，允许匿名反馈）
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  type        String   // 反馈类型：bug/建议/其他
-  title       String   // 标题
-  content     String   // 详细内容
-  contact     String?  // 联系方式（可选）
-  status      String   @default("待处理") // 状态：待处理/处理中/已解决/已关闭
-  reply       String?  // 管理员回复
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// 活动日志（使用统计）
 model ActivityLog {
-  id          String   @id @default(cuid())
-  userId      String?  // 用户ID（可选，未登录用户为null）
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action      String   // 操作类型：login/create_content/ai_generate/view_page等
-  resource    String?  // 资源类型：content/topic/ip等
-  resourceId  String?  // 资源ID
-  metadata    String?  // 额外信息（JSON）
-  ip          String?  // IP地址
-  userAgent   String?  // 浏览器信息
-  duration    Int?     // 操作耗时（毫秒）
-  status      String   @default("success") // 状态：success/error
-  error       String?  // 错误信息
-  createdAt   DateTime @default(now())
+  id         String   @id
+  userId     String?
+  action     String
+  resource   String?
+  resourceId String?
+  metadata   String?
+  ip         String?
+  userAgent  String?
+  duration   Int?
+  status     String   @default("success")
+  error      String?
+  createdAt  DateTime @default(now())
+  User       User?    @relation(fields: [userId], references: [id])
 
-  @@index([userId])
-  @@index([action])
   @@index([createdAt])
+  @@index([action])
+  @@index([userId])
+}
+
+model Category {
+  id        String   @id
+  name      String   @unique
+  color     String?
+  icon      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Content {
+  id         String   @id
+  userId     String
+  title      String
+  category   String
+  type       String
+  content    String
+  transcript String?
+  tags       String
+  metadata   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ContentType {
+  id        String   @id
+  name      String   @unique
+  icon      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Creation {
+  id        String   @id
+  userId    String
+  sourceIds String
+  prompt    String
+  result    String
+  type      String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id        String   @id
+  userId    String?
+  type      String
+  title     String
+  content   String
+  contact   String?
+  status    String   @default("待处理")
+  reply     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User?    @relation(fields: [userId], references: [id])
+}
+
+model IPProfile {
+  id          String   @id
+  userId      String
+  name        String
+  description String?
+  persona     String
+  style       String
+  topics      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model IPTemplate {
+  id             String   @id
+  name           String
+  category       String
+  persona        String
+  style          String
+  successCase    String
+  keyStrategy    String
+  targetAudience String
+  contentThemes  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+}
+
+model InviteCode {
+  id        String    @id
+  code      String    @unique
+  createdBy String?
+  usedBy    String?
+  isUsed    Boolean   @default(false)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+}
+
+model ScriptTemplate {
+  id          String   @id
+  name        String
+  type        String
+  structure   String
+  example     String
+  usageCount  Int      @default(0)
+  successRate Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model TopicIdea {
+  id            String   @id
+  userId        String
+  title         String
+  description   String?
+  platform      String   @default("通用")
+  category      String
+  status        String   @default("待创作")
+  aiScore       Int      @default(0)
+  angles        String?
+  bestTime      String?
+  expectedViews String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id          String        @id
+  email       String        @unique
+  password    String
+  name        String?
+  inviteCode  String?       @unique
+  invitedBy   String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  phone       String?       @unique
+  credits     Int?          @default(100)
+  ActivityLog ActivityLog[]
+  Content     Content[]
+  Creation    Creation[]
+  Feedback    Feedback[]
+  IPProfile   IPProfile[]
+  TopicIdea   TopicIdea[]
+}
+
+model ViralCase {
+  id           String   @id
+  title        String
+  platform     String
+  category     String
+  content      String
+  viewCount    Int
+  likeCount    Int
+  commentCount Int
+  shareCount   Int
+  publishDate  DateTime
+  tags         String
+  structure    String?
+  keyPoints    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
 }

@@ -159,70 +159,70 @@ export default function AdminPage() {
         {activeTab === 'system' && systemStatus && !loading && (
           <div className="space-y-6">
             {/* Database Counts */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">📊 数据库统计</h2>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">📊 数据库统计</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
                   <div className="text-3xl font-bold text-blue-600">{systemStatus.counts.users}</div>
-                  <div className="text-sm text-gray-600 mt-1">用户数</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">用户数</div>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
                   <div className="text-3xl font-bold text-green-600">{systemStatus.counts.contents}</div>
-                  <div className="text-sm text-gray-600 mt-1">内容数</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">内容数</div>
                 </div>
-                <div className="text-center p-4 bg-amber-50 rounded-lg">
+                <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-100">
                   <div className="text-3xl font-bold text-amber-600">{systemStatus.counts.topics}</div>
-                  <div className="text-sm text-gray-600 mt-1">选题数</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">选题数</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
                   <div className="text-3xl font-bold text-purple-600">{systemStatus.counts.creations}</div>
-                  <div className="text-sm text-gray-600 mt-1">创作数</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">创作数</div>
                 </div>
-                <div className="text-center p-4 bg-pink-50 rounded-lg">
+                <div className="text-center p-4 bg-pink-50 rounded-lg border border-pink-100">
                   <div className="text-3xl font-bold text-pink-600">{systemStatus.counts.feedbacks}</div>
-                  <div className="text-sm text-gray-600 mt-1">反馈数</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">反馈数</div>
                 </div>
-                <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                   <div className="text-3xl font-bold text-indigo-600">{systemStatus.counts.ipProfiles}</div>
-                  <div className="text-sm text-gray-600 mt-1">IP 配置</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">IP 配置</div>
                 </div>
-                <div className="text-center p-4 bg-cyan-50 rounded-lg">
+                <div className="text-center p-4 bg-cyan-50 rounded-lg border border-cyan-100">
                   <div className="text-3xl font-bold text-cyan-600">{systemStatus.counts.activityLogs}</div>
-                  <div className="text-sm text-gray-600 mt-1">活动日志</div>
+                  <div className="text-sm text-gray-700 mt-1 font-medium">活动日志</div>
                 </div>
               </div>
             </div>
 
             {/* Environment Check */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">⚙️ 环境配置</h2>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">⚙️ 环境配置</h2>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium">运行环境</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <span className="text-sm font-medium text-gray-900">运行环境</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                     {systemStatus.environment.nodeEnv}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium">Claude API Key</span>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <span className="text-sm font-medium text-gray-900">Claude API Key</span>
                   {systemStatus.environment.hasAnthropicKey ? (
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                       ✓ 已配置
                     </span>
                   ) : (
-                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
                       ✗ 未配置
                     </span>
                   )}
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium">数据库连接</span>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <span className="text-sm font-medium text-gray-900">数据库连接</span>
                   {systemStatus.environment.hasDatabaseUrl ? (
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                       ✓ 已配置
                     </span>
                   ) : (
-                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
                       ✗ 未配置
                     </span>
                   )}
@@ -231,19 +231,19 @@ export default function AdminPage() {
             </div>
 
             {/* Database Info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">💾 数据库信息</h2>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">💾 数据库信息</h2>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">类型</span>
-                  <span className="font-medium">{systemStatus.database.type}</span>
+                <div className="flex justify-between p-2">
+                  <span className="text-gray-700">类型</span>
+                  <span className="font-medium text-gray-900">{systemStatus.database.type}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">文件</span>
-                  <span className="font-medium">{systemStatus.database.file}</span>
+                <div className="flex justify-between p-2">
+                  <span className="text-gray-700">文件</span>
+                  <span className="font-medium text-gray-900">{systemStatus.database.file}</span>
                 </div>
                 <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800">
+                  <p className="text-sm text-amber-900 font-medium">
                     ⚠️ {systemStatus.database.note}
                   </p>
                 </div>
@@ -251,23 +251,23 @@ export default function AdminPage() {
             </div>
 
             {/* Recent Users */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-4">👥 最近注册用户</h2>
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900">👥 最近注册用户</h2>
               <div className="space-y-2">
                 {systemStatus.recentUsers.map((user: any) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div>
-                      <div className="font-medium">{user.name || user.email}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                      <div className="font-medium text-gray-900">{user.name || user.email}</div>
+                      <div className="text-sm text-gray-600">{user.email}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-600">
                         {new Date(user.createdAt).toLocaleDateString('zh-CN')}
                       </div>
                       {user.isActive ? (
-                        <span className="text-xs text-green-600">● 活跃</span>
+                        <span className="text-xs text-green-600 font-medium">● 活跃</span>
                       ) : (
-                        <span className="text-xs text-gray-400">● 未激活</span>
+                        <span className="text-xs text-gray-400 font-medium">● 未激活</span>
                       )}
                     </div>
                   </div>

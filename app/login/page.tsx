@@ -49,6 +49,23 @@ export default function LoginPage() {
         return
       }
 
+      // 检查是否是管理员，如果是则跳转到管理后台
+      if (isLogin) {
+        try {
+          const adminRes = await fetch('/api/auth/is-admin', { credentials: 'include' })
+          if (adminRes.ok) {
+            const adminData = await adminRes.json()
+            if (adminData.isAdmin) {
+              router.push('/admin')
+              router.refresh()
+              return
+            }
+          }
+        } catch (err) {
+          console.error('检查管理员权限失败:', err)
+        }
+      }
+
       router.push('/')
       router.refresh()
     } catch (err) {

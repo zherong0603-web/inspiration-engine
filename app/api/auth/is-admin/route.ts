@@ -1,21 +1,22 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { isAdminEmail } from '@/lib/admin'
+import { prisma } from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ isAdmin: false })
     }
 
-    const userWithEmail = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { email: true }
+    // 临时方案：第一个注册的用户是管理员
+    // 或者邮箱是 demo@example.com 的用户
+    const firstUser = await prisma.user.findFirst({
+      orderBy: { createdAt: 'asc' },
     })
 
-    const isAdmin = userWithEmail && isAdminEmail(userWithEmail.email)
+    const isAdmin = user.id === firstUser?.id || user.email === 'demo@example.com'
+
     return NextResponse.json({ isAdmin })
   } catch (error) {
     console.error('检查管理员权限失败:', error)

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import Loading from '@/components/ui/Loading'
+import Navbar from '@/components/Navbar'
 
 export default function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<any[]>([])
@@ -68,14 +69,19 @@ export default function FeedbackPage() {
 
   if (pageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loading size="lg" text="加载中..." />
-      </div>
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh] pt-20">
+          <Loading size="lg" text="加载中..." />
+        </div>
+      </>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="max-w-4xl mx-auto p-6 pt-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">反馈中心</h1>
         <button

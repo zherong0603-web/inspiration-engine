@@ -1,21 +1,50 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('stats')
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState('feedbacks')
   const [stats, setStats] = useState<any>(null)
   const [feedbacks, setFeedbacks] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    if (activeTab === 'stats') {
-      loadStats()
-    } else if (activeTab === 'feedbacks') {
-      loadFeedbacks()
+    checkAdmin()
+  }, [])
+
+  useEffect(() => {
+    if (isAdmin) {
+      if (activeTab === 'stats') {
+        loadStats()
+      } else if (activeTab === 'feedbacks') {
+        loadFeedbacks()
+      }
     }
-  }, [activeTab])
+  }, [activeTab, isAdmin])
+
+  const checkAdmin = async () => {
+    try {
+      const res = await fetch('/api/auth/is-admin')
+      if (res.ok) {
+        const data = await res.json()
+        setIsAdmin(data.isAdmin)
+        if (!data.isAdmin) {
+          alert('你没有管理员权限')
+          router.push('/')
+        }
+      }
+    } catch (error) {
+      console.error('检查权限失败:', error)
+      router.push('/')
+    } finally {
+      setChecking(false)
+    }
+  }
 
   const loadStats = async () => {
     setLoading(true)
@@ -45,6 +74,21 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checking) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-500">检查权限中...</div>
+        </div>
+      </>
+    )
+  }
+
+  if (!isAdmin) {
+    return null
   }
 
   return (

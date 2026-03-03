@@ -52,6 +52,15 @@ npx prisma db push
 # 生成 Prisma Client
 npx prisma generate
 
+# 添加示例数据（可选）
+npm run db:seed
+```
+
+### 5. 启动开发服务器
+
+# 生成 Prisma Client
+npx prisma generate
+
 # 初始化管理员账号和邀请码
 npm run db:init
 ```
@@ -65,6 +74,19 @@ npm run dev
 ```
 
 访问 http://localhost:3009
+
+## 演示账号
+
+如果运行了 `npm run db:seed`，可以使用以下演示账号快速体验：
+
+- **邮箱**: demo@example.com
+- **密码**: demo123456
+
+演示账号包含：
+- ✅ 完整的 IP 身份设置
+- ✅ 3 条示例内容
+- ✅ 2 条示例选题
+- ✅ 默认分类和内容类型
 
 ### 6. 注册账号
 

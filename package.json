@@ -8,6 +8,7 @@
     "start": "next start -p 3009",
     "lint": "eslint",
     "db:init": "tsx scripts/init-db.ts",
+    "db:seed": "tsx scripts/seed-demo-data.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

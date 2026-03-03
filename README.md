@@ -15,35 +15,64 @@
 
 ## 快速开始
 
-### 1. 安装依赖
+### 1. 克隆项目
+
+```bash
+git clone <repository-url>
+cd ip-content-platform
+```
+
+### 2. 安装依赖
 
 ```bash
 npm install
 ```
 
-### 2. 配置环境变量
+### 3. 配置环境变量
 
-创建 `.env.local` 文件并添加你的 Anthropic API Key：
+复制环境变量示例文件：
+
+```bash
+cp .env.example .env.local
+```
+
+编辑 `.env.local`，添加你的 Anthropic API Key：
 
 ```env
 ANTHROPIC_API_KEY=your_api_key_here
 DATABASE_URL="file:./dev.db"
 ```
 
-### 3. 初始化数据库
+### 4. 初始化数据库
 
 ```bash
-npx prisma migrate dev
+# 推送数据库 schema
+npx prisma db push
+
+# 生成 Prisma Client
 npx prisma generate
+
+# 初始化管理员账号和邀请码
+npm run db:init
 ```
 
-### 4. 启动开发服务器
+初始化后会显示管理员账号信息和邀请码。
+
+### 5. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-访问 http://localhost:3000
+访问 http://localhost:3009
+
+### 6. 注册账号
+
+使用初始化脚本生成的邀请码注册新账号，或使用管理员账号登录。
+
+## 部署
+
+详细部署指南请查看 [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## 功能说明
 

@@ -112,6 +112,13 @@ export default function Navbar() {
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-black/5 py-1 z-20">
                       <a
+                        href="/admin"
+                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        ⚙️ 管理后台
+                      </a>
+                      <a
                         href="/invite"
                         className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         onClick={() => setShowUserMenu(false)}

@@ -1,13 +1,9 @@
 'use client'
 
-import Navbar from '@/components/Navbar'
-
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-4xl mx-auto p-6 pt-24">
-        <h1 className="text-3xl font-bold mb-8">使用指南</h1>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">使用指南</h1>
 
         {/* 快速开始 */}
         <section className="bg-white rounded-lg shadow-sm p-6 mb-6">

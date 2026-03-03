@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     // 第1步：分析竞品密度（从数据库查询类似选题）
     const similarTopics = await prisma.topicIdea.count({
       where: {
+        userId: user.id, // 只统计当前用户的选题
         OR: [
           { title: { contains: title.slice(0, 5) } },
           { category }

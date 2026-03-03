@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
-// 获取所有内容类型
+// 获取所有内容类型（所有用户可访问）
 export async function GET() {
   try {
     const types = await prisma.contentType.findMany({
@@ -14,9 +15,14 @@ export async function GET() {
   }
 }
 
-// 创建新内容类型
+// 创建新内容类型（需要登录）
 export async function POST(request: Request) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { name, icon } = body
 

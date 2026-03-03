@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
-// 更新内容类型
+// 更新内容类型（需要登录）
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const { name, icon, order } = body
@@ -23,12 +29,17 @@ export async function PUT(
   }
 }
 
-// 删除内容类型
+// 删除内容类型（需要登录）
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
     const { id } = await params
 
     await prisma.contentType.delete({

@@ -76,7 +76,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-violet-50/30 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
@@ -88,13 +88,13 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             灵感引擎
           </h1>
-          <p className="text-gray-700 font-medium">
+          <p className="text-gray-800 font-semibold">
             {isLogin ? '欢迎回来' : '开始你的创作之旅'}
           </p>
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8 border border-black/5">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-200">
           {/* Tabs */}
           <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl">
             <button

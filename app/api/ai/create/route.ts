@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { generateContent } from '@/lib/ai'
 import { getCurrentUser } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -138,9 +140,20 @@ ${userPrompt}
       })
     }
 
+    // 记录 AI 生成日志
+    const duration = Date.now() - startTime
+    await logger.aiGenerate(user.id, 'content_creation', duration, request)
+
     return NextResponse.json({ result, creationId: creation.id })
   } catch (error) {
     console.error('创作内容时出错:', error)
+
+    // 记录错误日志
+    const user = await getCurrentUser()
+    if (user) {
+      await logger.error(user.id, 'ai_create', error instanceof Error ? error.message : String(error), request)
+    }
+
     return NextResponse.json(
       { error: 'Failed to create content', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

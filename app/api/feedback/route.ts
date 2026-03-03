@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 
 // 获取反馈列表
 export async function GET(request: NextRequest) {
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest) {
         contact,
       },
     })
+
+    // 记录反馈日志
+    await logger.submitFeedback(user?.id, feedback.id, request)
 
     return NextResponse.json(feedback)
   } catch (error) {

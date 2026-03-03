@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { verifyPassword, setUserSession } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,6 +51,9 @@ export async function POST(request: NextRequest) {
 
     // 设置 session
     await setUserSession(user.id)
+
+    // 记录登录日志
+    await logger.login(user.id, request)
 
     return NextResponse.json({
       success: true,

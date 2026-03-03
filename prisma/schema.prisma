@@ -93,6 +93,7 @@ model User {
   creations     Creation[]
   topicIdeas    TopicIdea[]
   feedbacks     Feedback[]
+  activityLogs  ActivityLog[]
 }
 
 // 邀请码
@@ -188,4 +189,25 @@ model Feedback {
   reply       String?  // 管理员回复
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// 活动日志（使用统计）
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?  // 用户ID（可选，未登录用户为null）
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String   // 操作类型：login/create_content/ai_generate/view_page等
+  resource    String?  // 资源类型：content/topic/ip等
+  resourceId  String?  // 资源ID
+  metadata    String?  // 额外信息（JSON）
+  ip          String?  // IP地址
+  userAgent   String?  // 浏览器信息
+  duration    Int?     // 操作耗时（毫秒）
+  status      String   @default("success") // 状态：success/error
+  error       String?  // 错误信息
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }

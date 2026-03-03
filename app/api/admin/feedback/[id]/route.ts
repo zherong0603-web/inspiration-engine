@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-
-// 管理员邮箱列表
-const ADMIN_EMAILS = ['admin@example.com']
+import { isAdminEmail } from '@/lib/admin'
 
 async function isAdmin(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { email: true }
   })
-  return user && ADMIN_EMAILS.includes(user.email)
+  return user && isAdminEmail(user.email)
 }
 
 // 更新反馈（回复、更新状态）

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-
-// 管理员邮箱列表
-const ADMIN_EMAILS = ['admin@example.com']
+import { isAdminEmail } from '@/lib/admin'
 
 export async function GET() {
   try {
@@ -17,7 +15,7 @@ export async function GET() {
       select: { email: true }
     })
 
-    const isAdmin = userWithEmail && ADMIN_EMAILS.includes(userWithEmail.email)
+    const isAdmin = userWithEmail && isAdminEmail(userWithEmail.email)
     return NextResponse.json({ isAdmin })
   } catch (error) {
     console.error('检查管理员权限失败:', error)

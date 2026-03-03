@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -12,6 +13,15 @@ export default function LoginPage() {
   const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // 从 URL 参数中获取邀请码
+  useEffect(() => {
+    const inviteParam = searchParams.get('invite')
+    if (inviteParam) {
+      setInviteCode(inviteParam.toUpperCase())
+      setIsLogin(false) // 自动切换到注册模式
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -139,15 +149,22 @@ export default function LoginPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    邀请码
+                    邀请码 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm"
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    placeholder="请输入8位邀请码"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-violet-500 focus:ring-2 focus:ring-violet-100 focus:outline-none transition-all text-sm uppercase"
+                    maxLength={8}
                     required
                   />
+                  {searchParams.get('invite') && (
+                    <p className="text-xs text-emerald-600 mt-1">
+                      ✓ 已自动填充邀请码
+                    </p>
+                  )}
                 </div>
               </>
             )}

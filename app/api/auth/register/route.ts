@@ -47,37 +47,32 @@ export async function POST(request: NextRequest) {
     // 如果提供了邀请码，验证邀请码
     let invitedBy = null
     if (inviteCode) {
-      const invite = await prisma.inviteCode.findUnique({
-        where: { code: inviteCode },
+      // 查找邀请码对应的用户
+      const inviter = await prisma.user.findUnique({
+        where: { inviteCode: inviteCode.toUpperCase() },
       })
 
-      if (!invite) {
+      if (!inviter) {
         return NextResponse.json(
-          { error: '邀请码不存在' },
+          { error: '邀请码无效' },
           { status: 400 }
         )
       }
 
-      if (invite.isUsed) {
-        return NextResponse.json(
-          { error: '邀请码已被使用' },
-          { status: 400 }
-        )
-      }
+      invitedBy = inviteCode.toUpperCase()
+    }
 
-      if (invite.expiresAt && invite.expiresAt < new Date()) {
-        return NextResponse.json(
-          { error: '邀请码已过期' },
-          { status: 400 }
-        )
-      }
+    // 为新用户生成唯一的邀请码
+    let newUserInviteCode = generateInviteCode()
+    let codeExists = await prisma.user.findUnique({
+      where: { inviteCode: newUserInviteCode }
+    })
 
-      invitedBy = inviteCode
-
-      // 标记邀请码为已使用
-      await prisma.inviteCode.update({
-        where: { code: inviteCode },
-        data: { isUsed: true },
+    // 确保邀请码唯一
+    while (codeExists) {
+      newUserInviteCode = generateInviteCode()
+      codeExists = await prisma.user.findUnique({
+        where: { inviteCode: newUserInviteCode }
       })
     }
 
@@ -87,7 +82,7 @@ export async function POST(request: NextRequest) {
         email,
         password: hashPassword(password),
         name: name || email.split('@')[0],
-        inviteCode: generateInviteCode(), // 为新用户生成邀请码
+        inviteCode: newUserInviteCode,
         invitedBy,
       },
     })

@@ -47,6 +47,7 @@ export default function Navbar() {
     { href: '/ip-profile', label: 'IP 设置', icon: '🎭' },
     { href: '/content-library', label: '内容库', icon: '📚' },
     { href: '/create', label: '内容创作', icon: '✨' },
+    { href: '/feedback', label: '反馈', icon: '💬' },
   ]
 
   return (
@@ -103,6 +104,13 @@ export default function Navbar() {
                       onClick={() => setShowUserMenu(false)}
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-black/5 py-1 z-20">
+                      <a
+                        href="/invite"
+                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        🎁 邀请好友
+                      </a>
                       <a
                         href="/account"
                         className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"

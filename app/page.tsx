@@ -42,7 +42,7 @@ export default function Home() {
 
   async function fetchStats() {
     try {
-      const res = await fetch('/api/stats')
+      const res = await fetch('/api/user/stats', { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         setStats(data)
@@ -66,97 +66,95 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-b from-white via-violet-50/30 to-white">
         <WelcomeGuide />
         <div className="max-w-6xl mx-auto px-6 pt-24 pb-20">
-          {/* 欢迎信息 */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              欢迎回来，{user.name || user.email.split('@')[0]} 👋
+          {/* 欢迎信息 + Slogan */}
+          <div className="text-center mb-16">
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
+              灵感引擎
             </h1>
-            <p className="text-gray-600">继续你的创作之旅</p>
+            <p className="text-xl md:text-2xl text-gray-600 mb-2 font-light">
+              AI 驱动的新媒体创作平台
+            </p>
+            <p className="text-base text-gray-500">
+              让每一个创意都能成为爆款
+            </p>
+            <div className="mt-6 text-lg text-gray-700">
+              欢迎回来，<span className="font-semibold text-violet-600">{user.name || user.email.split('@')[0]}</span> 👋
+            </div>
           </div>
 
-          {/* 数据统计 */}
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-2">📚</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.contentCount}</div>
-                <div className="text-sm text-gray-600">内容素材</div>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-2">💡</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.topicCount}</div>
-                <div className="text-sm text-gray-600">选题灵感</div>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <div className="text-3xl mb-2">✨</div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stats.creationCount}</div>
-                <div className="text-sm text-gray-600">创作内容</div>
+          {/* 快速上手 - 4步流程 */}
+          <div className="bg-white rounded-2xl p-10 border border-gray-200 shadow-sm mb-12">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">快速上手</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Link href="/ip-profile" className="group">
+                <div className="text-center p-6 rounded-xl border-2 border-gray-200 hover:border-violet-500 hover:shadow-lg transition-all">
+                  <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white rounded-xl flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md">
+                    1
+                  </div>
+                  <div className="text-2xl mb-2">🎭</div>
+                  <h3 className="font-semibold text-gray-900 mb-2">设置 IP 身份</h3>
+                  <p className="text-sm text-gray-600">定义你的人设和风格</p>
+                </div>
+              </Link>
+
+              <Link href="/content-library" className="group">
+                <div className="text-center p-6 rounded-xl border-2 border-gray-200 hover:border-emerald-500 hover:shadow-lg transition-all">
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-xl flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md">
+                    2
+                  </div>
+                  <div className="text-2xl mb-2">📚</div>
+                  <h3 className="font-semibold text-gray-900 mb-2">建立内容库</h3>
+                  <p className="text-sm text-gray-600">添加你的优质素材</p>
+                </div>
+              </Link>
+
+              <Link href="/topics" className="group">
+                <div className="text-center p-6 rounded-xl border-2 border-gray-200 hover:border-amber-500 hover:shadow-lg transition-all">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-xl flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md">
+                    3
+                  </div>
+                  <div className="text-2xl mb-2">💡</div>
+                  <h3 className="font-semibold text-gray-900 mb-2">发现爆款选题</h3>
+                  <p className="text-sm text-gray-600">AI 智能推荐选题</p>
+                </div>
+              </Link>
+
+              <Link href="/create" className="group">
+                <div className="text-center p-6 rounded-xl border-2 border-gray-200 hover:border-rose-500 hover:shadow-lg transition-all">
+                  <div className="w-16 h-16 bg-gradient-to-br from-rose-600 to-pink-600 text-white rounded-xl flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md">
+                    4
+                  </div>
+                  <div className="text-2xl mb-2">✨</div>
+                  <h3 className="font-semibold text-gray-900 mb-2">AI 智能创作</h3>
+                  <p className="text-sm text-gray-600">一键生成高质量内容</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* 我的数据 - 简化版 */}
+          {stats && (stats.contentCount > 0 || stats.topicCount > 0 || stats.creationCount > 0) && (
+            <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-8 border border-violet-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">我的创作数据</h2>
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <div>
+                  <div className="text-4xl font-bold text-violet-600 mb-1">{stats.contentCount}</div>
+                  <div className="text-sm text-gray-700">内容库素材</div>
+                  <div className="text-xs text-gray-500 mt-1">已添加的参考内容</div>
+                </div>
+                <div>
+                  <div className="text-4xl font-bold text-amber-600 mb-1">{stats.topicCount}</div>
+                  <div className="text-sm text-gray-700">选题灵感</div>
+                  <div className="text-xs text-gray-500 mt-1">已收集的选题想法</div>
+                </div>
+                <div>
+                  <div className="text-4xl font-bold text-rose-600 mb-1">{stats.creationCount}</div>
+                  <div className="text-sm text-gray-700">AI 创作</div>
+                  <div className="text-xs text-gray-500 mt-1">已生成的内容</div>
+                </div>
               </div>
             </div>
           )}
-
-          {/* 快捷入口 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link
-              href="/create"
-              className="group relative bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl p-8 hover:shadow-xl hover:shadow-violet-500/20 transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl flex-shrink-0">
-                  ✨
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">开始创作</h3>
-                  <p className="text-violet-100 text-sm">一键生成高质量内容</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="/topics"
-              className="group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0">
-                  💡
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">发现选题</h3>
-                  <p className="text-gray-600 text-sm">AI 智能推荐爆款选题</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="/content-library"
-              className="group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl flex-shrink-0">
-                  📚
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">内容库</h3>
-                  <p className="text-gray-600 text-sm">管理你的创作素材</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="/ip-profile"
-              className="group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center text-2xl flex-shrink-0">
-                  🎭
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">IP 设置</h3>
-                  <p className="text-gray-600 text-sm">完善你的 IP 人设</p>
-                </div>
-              </div>
-            </Link>
-          </div>
         </div>
       </div>
     )

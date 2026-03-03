@@ -15,9 +15,11 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchUser()
+    checkAdmin()
   }, [pathname]) // 当路由变化时重新获取用户信息
 
   async function fetchUser() {
@@ -32,6 +34,19 @@ export default function Navbar() {
     } catch (error) {
       console.error('获取用户信息失败:', error)
       setUser(null) // 如果出错，清除用户状态
+    }
+  }
+
+  async function checkAdmin() {
+    try {
+      const res = await fetch('/api/auth/is-admin')
+      if (res.ok) {
+        const data = await res.json()
+        setIsAdmin(data.isAdmin)
+      }
+    } catch (error) {
+      console.error('检查管理员权限失败:', error)
+      setIsAdmin(false)
     }
   }
 
@@ -111,13 +126,15 @@ export default function Navbar() {
                       onClick={() => setShowUserMenu(false)}
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-black/5 py-1 z-20">
-                      <a
-                        href="/admin"
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        ⚙️ 管理后台
-                      </a>
+                      {isAdmin && (
+                        <a
+                          href="/admin/feedback"
+                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          ⚙️ 管理后台
+                        </a>
+                      )}
                       <a
                         href="/invite"
                         className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -188,6 +205,15 @@ export default function Navbar() {
                   <div className="px-4 py-2 text-sm text-gray-500">
                     {user.name || user.email.split('@')[0]}
                   </div>
+                  {isAdmin && (
+                    <a
+                      href="/admin/feedback"
+                      onClick={() => setShowMobileMenu(false)}
+                      className="block px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                    >
+                      ⚙️ 管理后台
+                    </a>
+                  )}
                   <a
                     href="/invite"
                     onClick={() => setShowMobileMenu(false)}

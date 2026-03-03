@@ -52,7 +52,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
       setUser(null) // 清除本地用户状态
       setShowUserMenu(false) // 关闭菜单
       router.push('/login')

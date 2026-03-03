@@ -126,3 +126,50 @@ model TopicIdea {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// 爆款案例库（方案C）
+model ViralCase {
+  id            String   @id @default(cuid())
+  title         String   // 标题
+  platform      String   // 平台（抖音/小红书/视频号等）
+  category      String   // 分类
+  content       String   // 内容/脚本
+  viewCount     Int      // 播放量/阅读量
+  likeCount     Int      // 点赞数
+  commentCount  Int      // 评论数
+  shareCount    Int      // 分享数
+  publishDate   DateTime // 发布日期
+  tags          String   // 标签（JSON数组）
+  structure     String?  // 脚本结构分析（JSON）
+  keyPoints     String?  // 关键要素（JSON数组）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// IP 成功模板库（方案C）
+model IPTemplate {
+  id            String   @id @default(cuid())
+  name          String   // IP名称
+  category      String   // 类别（职场/情感/知识等）
+  persona       String   // 人设描述
+  style         String   // 风格特点
+  successCase   String   // 成功案例
+  keyStrategy   String   // 核心策略
+  targetAudience String  // 目标受众
+  contentThemes String   // 内容主题（JSON数组）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 脚本结构模板（方案C）
+model ScriptTemplate {
+  id            String   @id @default(cuid())
+  name          String   // 模板名称
+  type          String   // 类型（知识科普/故事/干货等）
+  structure     String   // 结构（JSON格式）
+  example       String   // 示例
+  usageCount    Int      @default(0) // 使用次数
+  successRate   Float    @default(0) // 成功率
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

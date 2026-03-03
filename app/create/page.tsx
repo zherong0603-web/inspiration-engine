@@ -213,6 +213,13 @@ function CreatePageContent() {
         prompt += `\n补充要求：${additionalRequirements}\n`
       }
 
+      console.log('=== 开始创作 ===')
+      console.log('请求参数:', {
+        ipId: selectedIpId,
+        sourceIds: selectedContentIds,
+        prompt,
+      })
+
       const res = await fetch('/api/ai/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -223,19 +230,24 @@ function CreatePageContent() {
         }),
       })
 
+      console.log('响应状态:', res.status, res.statusText)
+
       if (res.ok) {
         const data = await res.json()
+        console.log('生成成功:', data)
         setResults([{
           id: `result-${Date.now()}`,
           content: data.result,
           createdAt: new Date().toISOString(),
         }])
       } else {
-        alert('生成失败，请重试')
+        const errorData = await res.json().catch(() => ({ error: '无法解析错误信息' }))
+        console.error('生成失败:', errorData)
+        alert(`生成失败：${errorData.error || res.statusText}\n\n请检查控制台查看详细错误信息`)
       }
     } catch (error) {
-      console.error('创作失败:', error)
-      alert('创作失败，请重试')
+      console.error('创作失败（异常）:', error)
+      alert(`创作失败：${error instanceof Error ? error.message : '未知错误'}\n\n请检查控制台查看详细错误信息`)
     } finally {
       setLoading(false)
     }
@@ -271,15 +283,22 @@ function CreatePageContent() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24"></div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl backdrop-blur-sm flex-shrink-0">
               ✨
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">AI 内容创作</h1>
-              <p className="text-white/80 text-sm mt-1">
-                {topicTitle ? `正在创作：${topicTitle}` : '选择素材，三步生成爆款内容'}
-              </p>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-3">AI 内容创作</h1>
+              {topicTitle ? (
+                <div className="mt-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-white/70 text-base font-medium">正在创作：</span>
+                    <p className="text-3xl font-bold leading-tight">《{topicTitle}》</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-white/80 text-base mt-2">选择素材，三步生成爆款内容</p>
+              )}
             </div>
           </div>
         </div>
@@ -299,18 +318,16 @@ function CreatePageContent() {
               </span>
             </div>
 
-            {/* 智能推荐 */}
+            {/* 智能推荐标题栏 */}
             {!showAllContents && recommendedContents.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-bold text-indigo-600">✨ AI 推荐</span>
-                  <button
-                    onClick={() => setShowAllContents(true)}
-                    className="text-xs text-indigo-600 hover:text-indigo-700"
-                  >
-                    查看全部 →
-                  </button>
-                </div>
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-200">
+                <span className="text-sm font-bold text-indigo-600">✨ AI 推荐</span>
+                <button
+                  onClick={() => setShowAllContents(true)}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  查看全部 →
+                </button>
               </div>
             )}
 
@@ -520,7 +537,17 @@ function CreatePageContent() {
           {/* 生成结果 */}
           {results.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6">
-              <h2 className="text-lg font-bold text-slate-800 mb-4">生成结果</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-800">生成结果</h2>
+                <span className="text-xs text-slate-500">
+                  {new Date(results[0].createdAt).toLocaleString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </div>
               {results.map(result => (
                 <div key={result.id} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border-2 border-slate-200">
                   <pre className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed font-sans">

@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('准备创建反馈:', { userId: user?.id, type, title, content, contact })
+
     const feedback = await prisma.feedback.create({
       data: {
         userId: user?.id,
@@ -67,12 +69,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    console.log('反馈创建成功:', feedback.id)
+
     // 记录反馈日志
-    await logger.submitFeedback(user?.id, feedback.id, request)
+    try {
+      await logger.submitFeedback(user?.id, feedback.id, request)
+    } catch (logError) {
+      console.error('记录日志失败（不影响主流程）:', logError)
+    }
 
     return NextResponse.json(feedback)
   } catch (error) {
-    console.error('创建反馈失败:', error)
+    console.error('创建反馈失败 - 详细错误:', error)
     return NextResponse.json({ error: '创建反馈失败' }, { status: 500 })
   }
 }

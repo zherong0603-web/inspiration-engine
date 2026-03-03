@@ -6,7 +6,15 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 公开路由（不需要登录）
-  const publicPaths = ['/login', '/api/auth/login', '/api/auth/register']
+  const publicPaths = [
+    '/login',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/feedback', // 允许匿名提交反馈
+    '/feedback', // 反馈页面
+    '/', // 首页
+    '/help', // 帮助页面
+  ]
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
   // 如果是公开路由，直接放行

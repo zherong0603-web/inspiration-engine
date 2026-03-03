@@ -66,7 +66,7 @@ cd inspiration-engine
 ```bash
 cat > .env << 'EOF'
 # Anthropic API Key
-ANTHROPIC_API_KEY=sk-x3YDgqPpnjbVCxwa9AsFjA37fKXoaynBGkHuaPhvF7fE0elT
+ANTHROPIC_API_KEY=your_api_key_here
 ANTHROPIC_BASE_URL=https://hone.vvvv.ee
 
 # Database

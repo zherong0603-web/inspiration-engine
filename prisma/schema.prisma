@@ -92,6 +92,7 @@ model User {
   contents      Content[]
   creations     Creation[]
   topicIdeas    TopicIdea[]
+  feedbacks     Feedback[]
 }
 
 // 邀请码
@@ -172,4 +173,19 @@ model ScriptTemplate {
   successRate   Float    @default(0) // 成功率
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// 用户反馈
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String?  // 用户ID（可选，允许匿名反馈）
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type        String   // 反馈类型：bug/建议/其他
+  title       String   // 标题
+  content     String   // 详细内容
+  contact     String?  // 联系方式（可选）
+  status      String   @default("待处理") // 状态：待处理/处理中/已解决/已关闭
+  reply       String?  // 管理员回复
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

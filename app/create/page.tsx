@@ -63,6 +63,7 @@ function CreatePageContent() {
   // 创作参数
   const [creationType, setCreationType] = useState('short-video')
   const [style, setStyle] = useState('casual')
+  const [videoDuration, setVideoDuration] = useState('')
   const [additionalRequirements, setAdditionalRequirements] = useState('')
 
   // 选题信息
@@ -200,6 +201,10 @@ function CreatePageContent() {
       // 构建提示词
       let prompt = `创作类型：${CREATION_TYPES.find(t => t.value === creationType)?.label}\n`
       prompt += `内容风格：${STYLE_OPTIONS.find(s => s.value === style)?.label}\n`
+
+      if (videoDuration) {
+        prompt += `视频时长：${videoDuration}\n`
+      }
 
       if (topicTitle) {
         prompt += `\n选题：${topicTitle}\n`
@@ -498,6 +503,20 @@ function CreatePageContent() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* 视频时长 */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-700 mb-3">
+                🎬 视频时长（可选）
+              </label>
+              <input
+                type="text"
+                value={videoDuration}
+                onChange={(e) => setVideoDuration(e.target.value)}
+                placeholder="例如：60秒、3分钟、1-3分钟..."
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none text-sm bg-white text-slate-800"
+              />
             </div>
 
             {/* 步骤3：补充要求 */}

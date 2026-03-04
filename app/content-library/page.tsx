@@ -24,6 +24,14 @@ export default function ContentLibraryPage() {
   const [editingTags, setEditingTags] = useState<string[]>([])
   const [showAddTagInput, setShowAddTagInput] = useState(false)
   const [newGlobalTag, setNewGlobalTag] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newContent, setNewContent] = useState({
+    title: '',
+    category: '',
+    type: '',
+    content: '',
+    tags: [] as string[]
+  })
 
   useEffect(() => {
     fetchContents()
@@ -115,6 +123,36 @@ export default function ContentLibraryPage() {
     }
   }
 
+  async function saveNewContent() {
+    if (!newContent.title || !newContent.content) {
+      alert('请填写标题和内容')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newContent,
+          tags: JSON.stringify(newContent.tags)
+        }),
+        credentials: 'include'
+      })
+
+      if (res.ok) {
+        setShowAddForm(false)
+        setNewContent({ title: '', category: '', type: '', content: '', tags: [] })
+        fetchContents()
+      } else {
+        alert('保存失败')
+      }
+    } catch (error) {
+      console.error('保存内容失败:', error)
+      alert('保存失败')
+    }
+  }
+
   // 过滤内容
   const filteredContents = contents.filter(content => {
     // 搜索过滤
@@ -164,7 +202,7 @@ export default function ContentLibraryPage() {
           </div>
 
           {/* 搜索框 */}
-          <div className="relative">
+          <div className="relative mb-4">
             <input
               type="text"
               value={search}
@@ -176,8 +214,91 @@ export default function ContentLibraryPage() {
               🔍
             </div>
           </div>
+
+          {/* 手动添加按钮 */}
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="px-5 py-3 bg-white text-violet-600 rounded-xl font-semibold hover:shadow-xl transition-all flex items-center gap-2"
+          >
+            ➕ 手动添加内容
+          </button>
         </div>
       </div>
+
+      {/* 手动添加表单 */}
+      {showAddForm && (
+        <div className="bg-white rounded-2xl p-6 border-2 border-violet-200 shadow-lg mb-8">
+          <h2 className="text-lg font-bold text-slate-800 mb-4">✍️ 手动添加内容</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">标题 *</label>
+              <input
+                type="text"
+                value={newContent.title}
+                onChange={(e) => setNewContent({...newContent, title: e.target.value})}
+                className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 focus:outline-none text-slate-800"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">分类</label>
+                <input
+                  type="text"
+                  value={newContent.category}
+                  onChange={(e) => setNewContent({...newContent, category: e.target.value})}
+                  placeholder="如: 美食、旅游"
+                  className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 focus:outline-none text-slate-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">类型</label>
+                <input
+                  type="text"
+                  value={newContent.type}
+                  onChange={(e) => setNewContent({...newContent, type: e.target.value})}
+                  placeholder="如: 短视频、图文"
+                  className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 focus:outline-none text-slate-800"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">内容 *</label>
+              <textarea
+                value={newContent.content}
+                onChange={(e) => setNewContent({...newContent, content: e.target.value})}
+                rows={6}
+                className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 focus:outline-none text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">标签</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {newContent.tags.map(tag => (
+                  <span key={tag} className="px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-sm flex items-center gap-2">
+                    #{tag}
+                    <button onClick={() => setNewContent({...newContent, tags: newContent.tags.filter(t => t !== tag)})} className="hover:text-red-600">×</button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {allTags.filter(t => !newContent.tags.includes(t)).map(tag => (
+                  <button key={tag} onClick={() => setNewContent({...newContent, tags: [...newContent.tags, tag]})} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm hover:bg-slate-200">
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={saveNewContent} className="px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                保存
+              </button>
+              <button onClick={() => {setShowAddForm(false); setNewContent({title: '', category: '', type: '', content: '', tags: []})}} className="px-6 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-all">
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 标签筛选 */}
       {allTags.length > 0 && (

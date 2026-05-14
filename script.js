@@ -608,10 +608,10 @@ function buildPrompt(topicId, platform, format, duration, wordCount, angle) {
   const platformName = platform === 'xiaohongshu' ? '小红书' : '抖音';
   const customPrompt = document.getElementById('custom-prompt')?.value?.trim() || '';
 
-  // 知识库完整注入（后台，不在前台展示）
+  // 知识库带编号注入，便于引用标注
   const knowledgeSection = knowledge.length > 0
-    ? '\n\n## 背景知识库（自然融入，不要生硬引用）\n' +
-      knowledge.map(k => `### ${k.title}\n${k.content}`).join('\n\n')
+    ? '\n\n## 知识库（请在使用时标注来源编号，如[K1]）\n' +
+      knowledge.map((k, i) => `[K${i + 1}] ${k.title}：${k.content}`).join('\n\n')
     : '';
 
   const platformGuide = platform === 'xiaohongshu'
@@ -633,6 +633,10 @@ function buildPrompt(topicId, platform, format, duration, wordCount, angle) {
   };
   const angleSection = angle && angleMap[angle] ? `\n\n## 写作角度\n${angleMap[angle]}` : '';
 
+  const citationRule = knowledge.length > 0
+    ? '\n- 重要：当你使用了知识库中的内容时，请在该句末尾标注来源编号，格式如[K1]、[K2]。未使用知识库的内容不需要标注。'
+    : '';
+
   return `你是专业的短视频内容创作者，请根据以下信息创作内容脚本。
 
 ## IP人设
@@ -652,7 +656,7 @@ ${knowledgeSection}
 - ${platformGuide}
 - ${formatGuide}
 - 内容必须符合IP人设的风格和领域
-- 如有知识库内容，请自然融入，体现IP的专业积累
+- 如有知识库内容，请自然融入，体现IP的专业积累${citationRule}
 ${customSection}${angleSection}
 
 请直接输出脚本内容，不需要额外说明。`;
@@ -913,7 +917,41 @@ function saveCurrentDraft() {
 
 function displayDraftResult(content) {
   const el = document.getElementById('draft-content');
-  el.textContent = content;
+  const knowledge = currentKnowledge();
+
+  if (knowledge.length > 0) {
+    // 解析 [K1] [K2] 等引用标注，高亮显示
+    let html = escHtml(content);
+    html = html.replace(/\[K(\d+)\]/g, (match, num) => {
+      const idx = parseInt(num) - 1;
+      const item = knowledge[idx];
+      if (item) {
+        return `<span class="inline-block px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded font-medium cursor-help" title="引用自知识库：${escHtml(item.title)}">[K${num}]</span>`;
+      }
+      return match;
+    });
+
+    // 统计引用情况
+    const cited = new Set();
+    content.replace(/\[K(\d+)\]/g, (_, num) => { cited.add(parseInt(num)); });
+    const citedCount = cited.size;
+    const totalCount = knowledge.length;
+
+    // 添加引用报告
+    let report = `<div class="mt-4 pt-4 border-t border-gray-200">
+      <div class="text-xs font-medium text-gray-500 mb-2">知识库引用报告</div>
+      <div class="flex gap-3 text-xs">
+        <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded-md">引用 ${citedCount}/${totalCount} 条知识</span>`;
+    if (citedCount < totalCount) {
+      const unused = knowledge.filter((_, i) => !cited.has(i + 1)).map(k => k.title);
+      report += `<span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-md">未使用：${unused.join('、')}</span>`;
+    }
+    report += `</div></div>`;
+
+    el.innerHTML = `<div class="whitespace-pre-wrap leading-relaxed">${html}</div>${report}`;
+  } else {
+    el.textContent = content;
+  }
   el.dataset.content = content;
 }
 

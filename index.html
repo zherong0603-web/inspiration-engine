@@ -62,7 +62,7 @@
       </a>
     </nav>
 
-    <!-- 底部：全局连接状态 + 删除IP -->
+    <!-- 底部：连接状态 + 版本信息 -->
     <div class="p-3 border-t border-gray-100 space-y-2">
       <!-- 全局连接状态 -->
       <div id="sidebar-conn-status" onclick="switchSection('settings')" class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" title="点击进入API控制台">
@@ -72,6 +72,14 @@
           <div id="sidebar-conn-sub" class="text-xs text-gray-400 truncate hidden"></div>
         </div>
         <span class="text-gray-300 text-xs">›</span>
+      </div>
+      <!-- 版本信息 + 更新日志入口 -->
+      <div onclick="toggleChangelog()" class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group" title="查看更新日志">
+        <div class="w-2 h-2 rounded-full shrink-0 bg-emerald-400"></div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-gray-500 truncate">v1.1 · 2026-05-14</div>
+        </div>
+        <span class="text-gray-300 text-xs group-hover:text-gray-500 transition-colors">?</span>
       </div>
       <button onclick="deleteIp(state.currentIpId)" class="w-full text-xs text-gray-400 hover:text-red-500 py-1.5 transition-colors">删除当前IP</button>
     </div>
@@ -537,6 +545,63 @@
     document.getElementById('new-ip-field').value = '';
     document.getElementById('new-ip-audience').value = '';
   }
+
+  function toggleChangelog() {
+    const panel = document.getElementById('changelog-panel');
+    panel.classList.toggle('hidden');
+  }
 </script>
+
+<!-- 更新日志侧面板 -->
+<div id="changelog-panel" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="toggleChangelog()"></div>
+  <div class="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl border-l border-gray-200 flex flex-col animate-slide-in">
+    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-base font-semibold text-gray-900">更新日志</h2>
+      <button onclick="toggleChangelog()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <!-- v1.1 -->
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-md">v1.1</span>
+          <span class="text-xs text-gray-400">2026-05-14</span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1.5 pl-3">
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>新增 DeepSeek 为默认 AI（国内直连，稳定快速）</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>新增知识库引用标注（看清AI用了哪些知识）</li>
+          <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">~</span>修复 API 连接，支持流式逐字输出</li>
+          <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">~</span>统一代理架构，消除网络问题</li>
+          <li class="flex items-start gap-2"><span class="text-red-400 mt-0.5">-</span>移除 MiniMax 提供商</li>
+        </ul>
+      </div>
+      <!-- v1.0 -->
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-md">v1.0</span>
+          <span class="text-xs text-gray-400">2026-03-26</span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1.5 pl-3">
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>IP 人设管理 + 知识库系统</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>选题推荐（小红书/抖音双平台）</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>内容创作（演示模式 + AI 模式）</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>邀请码登录 + 工作区隔离</li>
+          <li class="flex items-start gap-2"><span class="text-emerald-500 mt-0.5">+</span>一键部署到云服务器</li>
+        </ul>
+      </div>
+    </div>
+    <!-- 底部联系方式 -->
+    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+      <div class="text-xs text-gray-500 mb-1.5">反馈与建议</div>
+      <div class="text-sm text-gray-700 font-medium">zheronew003@gmail.com</div>
+      <div class="text-xs text-gray-400 mt-2">灵感引擎 · 让创作者专注创作</div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .animate-slide-in { animation: slideIn 0.2s ease-out; }
+</style>
 </body>
 </html>

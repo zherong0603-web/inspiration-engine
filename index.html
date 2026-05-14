@@ -51,6 +51,9 @@
       <a href="#" data-section="topics" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
         <span>🔥</span><span class="text-sm">选题库</span>
       </a>
+      <a href="#" data-section="trending" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <span>📈</span><span class="text-sm">热点灵感</span>
+      </a>
       <a href="#" data-section="create" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
         <span>✍️</span><span class="text-sm">创作</span>
       </a>
@@ -239,16 +242,6 @@
           </div>
         </div>
 
-        <!-- 热点灵感面板 -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-base">🔥</span>
-            <h3 class="text-sm font-semibold text-gray-900">实时热点灵感</h3>
-            <span class="text-xs text-gray-400">— 点击热点话题，快速生成相关选题</span>
-          </div>
-          <div id="hot-panel"></div>
-        </div>
-
         <!-- 搜索 + 筛选栏 -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4 space-y-3">
           <!-- 搜索框 + 时间筛选 -->
@@ -282,6 +275,63 @@
         </div>
 
         <div id="topic-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- ===== 热点灵感 ===== -->
+      <section id="trending-section" class="section hidden">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-1">热点灵感</h1>
+          <p class="text-gray-500 text-sm">实时全网热榜，点击话题快速生成相关选题</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- 左侧：热榜列表 -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <div id="hot-panel"></div>
+            </div>
+          </div>
+
+          <!-- 右侧：快速生成 -->
+          <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h3 class="text-base font-semibold text-gray-900 mb-4">热点 → 选题</h3>
+              <p class="text-sm text-gray-500 mb-4">点击左侧热点话题，关键词会自动填入下方，然后一键生成与你IP相关的选题。</p>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">热点关键词</label>
+                  <input id="trending-keyword-input" type="text" placeholder="点击左侧热点或手动输入..." class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">平台</label>
+                  <div class="flex gap-2">
+                    <label class="cursor-pointer"><input type="radio" name="trending-platform" value="xiaohongshu" checked class="hidden peer"><span class="inline-block px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-red-50 peer-checked:text-red-700 peer-checked:border-red-200 transition-all">小红书</span></label>
+                    <label class="cursor-pointer"><input type="radio" name="trending-platform" value="douyin" class="hidden peer"><span class="inline-block px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">抖音</span></label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">格式</label>
+                  <div class="flex gap-2">
+                    <label class="cursor-pointer"><input type="radio" name="trending-format" value="口播" checked class="hidden peer"><span class="inline-block px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">口播</span></label>
+                    <label class="cursor-pointer"><input type="radio" name="trending-format" value="图文" class="hidden peer"><span class="inline-block px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">图文</span></label>
+                  </div>
+                </div>
+                <button onclick="generateFromTrending()" class="w-full bg-gray-900 text-white font-medium rounded-lg px-4 py-2.5 hover:bg-gray-800 transition-colors shadow-sm text-sm">生成选题 →</button>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
+              <div class="text-xs text-gray-500 space-y-2">
+                <p><span class="font-medium text-gray-700">使用方法：</span></p>
+                <p>1. 点击"刷新热榜"获取实时数据</p>
+                <p>2. 点击感兴趣的热点话题</p>
+                <p>3. 选择平台和格式</p>
+                <p>4. 点击"生成选题"</p>
+                <p class="pt-2 border-t border-gray-200">生成的选题会自动保存到选题库中</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ===== 创作 ===== -->

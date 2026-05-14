@@ -637,12 +637,82 @@ function setHotTab(tab) {
 }
 
 function useHotTopic(title) {
-  // 将热点话题填入关键词输入框并触发生成
-  const input = document.getElementById('topic-keyword-input');
+  // 将热点话题填入热点页的关键词输入框
+  const input = document.getElementById('trending-keyword-input');
   if (input) {
     input.value = title;
     input.focus();
-    showToast(`已填入"${title.slice(0, 15)}..."，点击联网生成即可`);
+    showToast(`已选择"${title.slice(0, 15)}${title.length > 15 ? '...' : ''}"，点击生成选题`);
+  }
+}
+
+function generateFromTrending() {
+  const input = document.getElementById('trending-keyword-input');
+  const keyword = input?.value.trim();
+  if (!keyword) { showToast('请先点击一个热点话题'); input?.focus(); return; }
+  const ip = currentIp();
+  if (!ip) { alert('请先设定IP信息'); return; }
+
+  const platform = document.querySelector('input[name="trending-platform"]:checked')?.value || 'xiaohongshu';
+  const format = document.querySelector('input[name="trending-format"]:checked')?.value || '口播';
+
+  if (state.apiConfig.apiKey) {
+    const btn = document.querySelector('#trending-section button[onclick="generateFromTrending()"]');
+    if (btn) { btn.innerHTML = '<span class="inline-block animate-spin mr-1">⟳</span>AI生成中'; btn.disabled = true; }
+    const prompt = buildKeywordTopicPrompt(keyword, platform, format);
+    callAI(prompt).then(text => {
+      const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const jsonStr = cleaned.match(/\[[\s\S]*\]/)?.[0] || '[]';
+      const arr = JSON.parse(jsonStr);
+      if (!arr.length) throw new Error('empty');
+      const now = Date.now();
+      const topics = arr.slice(0, 5).map((t, i) => ({
+        id: 'topic_' + now + '_hot_' + i,
+        ipId: state.currentIpId,
+        title: t.title || t,
+        platform, format,
+        reason: t.reason || '',
+        keyword,
+        starred: false,
+        createdAt: new Date(now + i).toISOString()
+      }));
+      state.topicList.unshift(...topics);
+      saveTopicList();
+      renderTopicList();
+      showToast(`✅ 已生成 ${topics.length} 个选题，已保存到选题库`);
+    }).catch(err => {
+      showToast('生成失败：' + err.message.slice(0, 50));
+    }).finally(() => {
+      if (btn) { btn.textContent = '生成选题 →'; btn.disabled = false; }
+    });
+  } else {
+    // 演示模式
+    const field = ip.field || '内容创作';
+    const audience = ip.audience || '普通用户';
+    const platformName = platform === 'xiaohongshu' ? '小红书' : '抖音';
+    const templates = [
+      { title: `${keyword}+${field}，${audience}必看的实用指南`, reason: `${platformName}：关键词结合领域，精准触达目标用户` },
+      { title: `做${field}的${audience}，如何用好${keyword}？`, reason: `${platformName}：问句式标题，引发思考` },
+      { title: `${keyword}这件事，${field}领域的${audience}都做错了`, reason: `${platformName}：反转型，制造认知冲突` },
+      { title: `${keyword}×${field}：${audience}的完整操作手册`, reason: `${platformName}：手册型，收藏价值高` },
+      { title: `从${keyword}出发，${audience}做${field}的新思路`, reason: `${platformName}：角度新颖，差异化内容` },
+    ];
+    const shuffled = [...templates].sort(() => Math.random() - 0.5);
+    const now = Date.now();
+    const topics = shuffled.slice(0, 5).map((t, i) => ({
+      id: 'topic_' + now + '_hot_' + i,
+      ipId: state.currentIpId,
+      title: t.title,
+      platform, format,
+      reason: t.reason,
+      keyword,
+      starred: false,
+      createdAt: new Date(now + i).toISOString()
+    }));
+    state.topicList.unshift(...topics);
+    saveTopicList();
+    renderTopicList();
+    showToast(`✅ 已生成 ${topics.length} 个选题（演示模式），已保存到选题库`);
   }
 }
 
@@ -670,7 +740,7 @@ function renderHotPanel() {
   } else if (items.length === 0) {
     listHtml = '<div class="py-8 text-center text-sm text-gray-400">点击"刷新热榜"获取实时数据</div>';
   } else {
-    listHtml = '<div class="space-y-1 max-h-64 overflow-y-auto">' + items.slice(0, 20).map((item, i) => {
+    listHtml = '<div class="space-y-1 max-h-[480px] overflow-y-auto">' + items.slice(0, 30).map((item, i) => {
       const rankClass = i < 3 ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600';
       const hotNum = item.hot > 10000 ? (item.hot / 10000).toFixed(1) + '万' : item.hot;
       return `<div class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors" onclick="useHotTopic('${escHtml(item.title.replace(/'/g, "\\'"))}')">
@@ -687,7 +757,6 @@ function renderHotPanel() {
       <button onclick="fetchHotTopics()" class="text-xs px-3 py-1.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors ${hotLoading ? 'opacity-50' : ''}">刷新热榜</button>
     </div>
     ${listHtml}
-    <p class="mt-2 text-xs text-gray-400 text-center">点击热点话题 → 自动填入关键词 → 生成相关选题</p>
   `;
 }
 
@@ -1858,7 +1927,7 @@ function switchSection(section) {
   }
   if (section === 'create') renderCreateHeader();
   if (section === 'history') renderDraftHistory();
-  if (section === 'topics') { renderHotPanel(); fetchHotTopics(); }
+  if (section === 'trending') { renderHotPanel(); fetchHotTopics(); }
 }
 
 // ============================================================

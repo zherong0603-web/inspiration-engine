@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灵感引擎 - 邀请码管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Inter, 'PingFang SC', system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+<div class="max-w-4xl mx-auto p-8">
+  <!-- 页头 -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">邀请码管理</h1>
+      <p class="text-sm text-gray-500 mt-1">灵感引擎内测管理后台</p>
+    </div>
+    <a href="login.html" class="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-4 py-2 transition-colors">← 返回登录页</a>
+  </div>
+
+  <!-- 新增邀请码 -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+    <h2 class="text-base font-semibold text-gray-900 mb-4">新增邀请码</h2>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">邀请码 <span class="text-red-500">*</span></label>
+        <input type="text" id="new-code" placeholder="如：BETA-D01"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all uppercase" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">用户ID <span class="text-red-500">*</span></label>
+        <input type="text" id="new-userid" placeholder="如：userD"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">工作区ID <span class="text-red-500">*</span></label>
+        <input type="text" id="new-wsid" placeholder="如：ws_userD（自动填充）"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">过期时间（可选）</label>
+        <input type="date" id="new-expires"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+      </div>
+      <div class="col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">备注（可选）</label>
+        <input type="text" id="new-note" placeholder="如：某某同学内测"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+      </div>
+    </div>
+    <div class="flex gap-3 items-center">
+      <button onclick="addInviteCode()" class="bg-gray-900 text-white font-medium rounded-lg px-5 py-2.5 hover:bg-gray-800 transition-colors text-sm">新增邀请码</button>
+      <button onclick="autoFillWorkspaceId()" class="border border-gray-300 text-gray-700 text-sm font-medium rounded-lg px-4 py-2.5 hover:bg-gray-50 transition-colors">自动填充工作区ID</button>
+      <span id="add-msg" class="text-sm text-green-600 hidden"></span>
+    </div>
+  </div>
+
+  <!-- 邀请码列表 -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-semibold text-gray-900">邀请码列表</h2>
+      <span id="total-count" class="text-sm text-gray-500"></span>
+    </div>
+    <div id="invite-list"></div>
+  </div>
+</div>
+
+<!-- 编辑过期时间弹窗 -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl border border-gray-200 shadow-lg p-6 w-96">
+    <h3 class="text-base font-semibold text-gray-900 mb-4">设置过期时间</h3>
+    <input type="hidden" id="edit-code-id" />
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1.5">过期时间</label>
+      <input type="date" id="edit-expires"
+        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+      <p class="text-xs text-gray-400 mt-1">不填则永久有效</p>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="saveExpiry()" class="bg-gray-900 text-white font-medium rounded-lg px-5 py-2 hover:bg-gray-800 transition-colors text-sm">保存</button>
+      <button onclick="closeModal()" class="border border-gray-300 text-gray-700 font-medium rounded-lg px-5 py-2 hover:bg-gray-50 transition-colors text-sm">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="invites.js"></script>
+<script>
+  // 数据迁移：旧 key 'inviteCodes' → 新 key 'linggan_invites'
+  (function migrateOldData() {
+    const oldKey = 'inviteCodes';
+    const newKey = 'linggan_invites';
+    const hasNew = localStorage.getItem(newKey);
+    const hasOld = localStorage.getItem(oldKey);
+    if (!hasNew && hasOld) {
+      // 把旧数据搬到新 key
+      localStorage.setItem(newKey, hasOld);
+      localStorage.removeItem(oldKey);
+      console.log('[invites] 已迁移旧数据到 linggan_invites');
+    } else if (hasOld) {
+      // 新 key 已存在，直接清除旧 key
+      localStorage.removeItem(oldKey);
+    }
+  })();
+
+  // 页面初始化
+  renderList();
+
+  // 用户ID输入时自动填充工作区ID
+  document.getElementById('new-userid').addEventListener('input', function() {
+    const userId = this.value.trim();
+    const wsEl = document.getElementById('new-wsid');
+    if (userId && !wsEl.value) {
+      wsEl.value = 'ws_' + userId;
+    }
+  });
+
+  function autoFillWorkspaceId() {
+    const userId = document.getElementById('new-userid').value.trim();
+    if (userId) document.getElementById('new-wsid').value = 'ws_' + userId;
+  }
+
+  function renderList() {
+    const list = getAllInviteCodes();
+    const container = document.getElementById('invite-list');
+    const totalEl = document.getElementById('total-count');
+
+    totalEl.textContent = `共 ${list.length} 个`;
+
+    if (list.length === 0) {
+      container.innerHTML = '<p class="text-sm text-gray-400 py-8 text-center">暂无邀请码</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100">
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">邀请码</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">用户ID</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">工作区ID</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">状态</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">过期时间</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3 pr-4">备注</th>
+              <th class="text-left text-xs font-medium text-gray-500 pb-3">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            ${list.map((item, idx) => renderRow(item, idx)).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderRow(item, idx) {
+    const isActive = item.status === 'active';
+    const isExpired = item.expiresAt && new Date(item.expiresAt) < new Date();
+    let statusTag = '';
+    if (!isActive) {
+      statusTag = '<span class="inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-500">已停用</span>';
+    } else if (isExpired) {
+      statusTag = '<span class="inline-block px-2 py-0.5 rounded text-xs bg-red-100 text-red-600">已过期</span>';
+    } else {
+      statusTag = '<span class="inline-block px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">有效</span>';
+    }
+
+    const expiresText = item.expiresAt ? item.expiresAt : '<span class="text-gray-400">永久</span>';
+
+    return `
+      <tr class="${!isActive || isExpired ? 'opacity-60' : ''}">
+        <td class="py-3 pr-4">
+          <span class="font-mono font-semibold text-gray-900">${item.inviteCode}</span>
+        </td>
+        <td class="py-3 pr-4 text-gray-700">${item.userId}</td>
+        <td class="py-3 pr-4 text-gray-500 text-xs">${item.workspaceId}</td>
+        <td class="py-3 pr-4">${statusTag}</td>
+        <td class="py-3 pr-4 text-gray-600 text-xs">${expiresText}</td>
+        <td class="py-3 pr-4 text-gray-500 text-xs">${item.note || '-'}</td>
+        <td class="py-3">
+          <div class="flex gap-2">
+            <button onclick="copyCode('${item.inviteCode}')" class="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">复制</button>
+            <button onclick="openExpiryModal('${item.inviteCode}')" class="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">过期</button>
+            ${isActive
+              ? `<button onclick="toggleStatus('${item.inviteCode}', 'disabled')" class="text-xs px-2.5 py-1.5 border border-orange-200 rounded-lg text-orange-600 hover:bg-orange-50 transition-colors">停用</button>`
+              : `<button onclick="toggleStatus('${item.inviteCode}', 'active')" class="text-xs px-2.5 py-1.5 border border-green-200 rounded-lg text-green-600 hover:bg-green-50 transition-colors">启用</button>`
+            }
+            <button onclick="deleteCode('${item.inviteCode}')" class="text-xs px-2.5 py-1.5 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 transition-colors">删除</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function addInviteCode() {
+    const code = document.getElementById('new-code').value.trim().toUpperCase();
+    const userId = document.getElementById('new-userid').value.trim();
+    const wsId = document.getElementById('new-wsid').value.trim();
+    const expires = document.getElementById('new-expires').value;
+    const note = document.getElementById('new-note').value.trim();
+
+    if (!code || !userId || !wsId) {
+      alert('邀请码、用户ID、工作区ID 均为必填项');
+      return;
+    }
+
+    const list = getAllInviteCodes();
+    if (list.find(i => i.inviteCode === code)) {
+      alert(`邀请码 ${code} 已存在`);
+      return;
+    }
+
+    list.push({
+      inviteCode: code,
+      userId,
+      workspaceId: wsId,
+      status: 'active',
+      expiresAt: expires || null,
+      note: note || null,
+      createdAt: new Date().toISOString()
+    });
+
+    saveAllInviteCodes(list);
+    renderList();
+
+    // 清空表单
+    document.getElementById('new-code').value = '';
+    document.getElementById('new-userid').value = '';
+    document.getElementById('new-wsid').value = '';
+    document.getElementById('new-expires').value = '';
+    document.getElementById('new-note').value = '';
+
+    const msg = document.getElementById('add-msg');
+    msg.textContent = `✅ 已添加 ${code}`;
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 2500);
+  }
+
+  function toggleStatus(code, newStatus) {
+    const list = getAllInviteCodes();
+    const item = list.find(i => i.inviteCode === code);
+    if (item) {
+      item.status = newStatus;
+      saveAllInviteCodes(list);
+      renderList();
+    }
+  }
+
+  function deleteCode(code) {
+    if (!confirm(`确定删除邀请码 ${code}？\n注意：删除后该用户仍可看到本地已有数据，但无法重新登录。`)) return;
+    const list = getAllInviteCodes().filter(i => i.inviteCode !== code);
+    saveAllInviteCodes(list);
+    renderList();
+  }
+
+  function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+      showCopyFeedback(code);
+    }).catch(() => {
+      // 降级方案
+      const el = document.createElement('textarea');
+      el.value = code;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      showCopyFeedback(code);
+    });
+  }
+
+  function showCopyFeedback(code) {
+    const msg = document.getElementById('add-msg');
+    msg.textContent = `✅ 已复制 ${code}`;
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 2000);
+  }
+
+  function openExpiryModal(code) {
+    document.getElementById('edit-code-id').value = code;
+    const list = getAllInviteCodes();
+    const item = list.find(i => i.inviteCode === code);
+    document.getElementById('edit-expires').value = item?.expiresAt || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+  }
+
+  function saveExpiry() {
+    const code = document.getElementById('edit-code-id').value;
+    const expires = document.getElementById('edit-expires').value;
+    const list = getAllInviteCodes();
+    const item = list.find(i => i.inviteCode === code);
+    if (item) {
+      item.expiresAt = expires || null;
+      saveAllInviteCodes(list);
+      renderList();
+    }
+    closeModal();
+  }
+
+  // 点击弹窗外关闭
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>

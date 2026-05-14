@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灵感引擎 - AI内容创作工具</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Inter, 'PingFang SC', system-ui, -apple-system, sans-serif; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+<script src="invites.js"></script>
+<script>
+  // 工作区检查：未登录跳转到登录页
+  const workspace = JSON.parse(localStorage.getItem('currentWorkspace') || 'null');
+  if (!workspace || !workspace.workspaceId) {
+    window.location.href = 'login.html';
+  }
+</script>
+<div class="flex h-screen overflow-hidden">
+
+  <!-- 侧边栏 -->
+  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <!-- Logo + 工作区状态 -->
+    <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+      <div class="text-xl font-bold text-gray-900 mb-3">灵感引擎</div>
+
+      <!-- 工作区状态 -->
+      <div class="mb-4 p-2 bg-blue-50 rounded-lg border border-blue-100">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs text-blue-600 font-medium">内测工作区</span>
+          <button onclick="logoutWorkspace()" class="text-xs text-blue-600 hover:text-blue-800 transition-colors" title="退出工作区">退出</button>
+        </div>
+        <div id="workspace-info" class="text-xs text-blue-700"></div>
+      </div>
+
+      <!-- IP 选择器 -->
+      <div class="flex gap-2 items-center">
+        <select id="ip-selector" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></select>
+        <button onclick="showCreateIpPanel()" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors text-lg font-light" title="新建IP">+</button>
+      </div>
+    </div>
+
+    <!-- 导航 -->
+    <nav class="flex flex-col gap-1 p-3 flex-1">
+      <a href="#" data-section="ip" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-900 bg-gray-100 font-medium transition-colors">
+        <span>🧠</span><span class="text-sm">IP第二大脑</span>
+      </a>
+      <a href="#" data-section="topics" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <span>🔥</span><span class="text-sm">选题库</span>
+      </a>
+      <a href="#" data-section="create" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <span>✍️</span><span class="text-sm">创作</span>
+      </a>
+      <a href="#" data-section="history" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <span>📚</span><span class="text-sm">历史记录</span>
+      </a>
+      <a href="#" data-section="settings" class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <span>⚙️</span><span class="text-sm">设置</span>
+      </a>
+    </nav>
+
+    <!-- 底部：全局连接状态 + 删除IP -->
+    <div class="p-3 border-t border-gray-100 space-y-2">
+      <!-- 全局连接状态 -->
+      <div id="sidebar-conn-status" onclick="switchSection('settings')" class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" title="点击进入API控制台">
+        <div id="sidebar-conn-dot" class="w-2 h-2 rounded-full shrink-0 bg-gray-300"></div>
+        <div class="flex-1 min-w-0">
+          <div id="sidebar-conn-text" class="text-xs text-gray-500 truncate">未配置 API</div>
+          <div id="sidebar-conn-sub" class="text-xs text-gray-400 truncate hidden"></div>
+        </div>
+        <span class="text-gray-300 text-xs">›</span>
+      </div>
+      <button onclick="deleteIp(state.currentIpId)" class="w-full text-xs text-gray-400 hover:text-red-500 py-1.5 transition-colors">删除当前IP</button>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-5xl mx-auto p-8 space-y-0">
+
+      <!-- ===== IP第二大脑 ===== -->
+      <section id="ip-section" class="section">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 mb-1">IP第二大脑</h1>
+          <p class="text-gray-500 text-sm">定义你的创作人设与知识背景</p>
+        </div>
+
+        <!-- 产品引导卡片 -->
+        <div class="mb-6 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">🎯</span>
+            <h3 class="text-base font-semibold text-gray-900">先定义你的内容身份，再让AI按你的方式输出</h3>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center shrink-0">1</div>
+              <div>
+                <div class="text-sm font-medium text-gray-800 mb-0.5">设定IP基础信息</div>
+                <div class="text-xs text-gray-500">填写领域、受众、风格，告诉AI你是谁</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center shrink-0">2</div>
+              <div>
+                <div class="text-sm font-medium text-gray-800 mb-0.5">上传知识库</div>
+                <div class="text-xs text-gray-500">粘贴你的文章、观点、案例，让AI学会你的表达方式</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center shrink-0">3</div>
+              <div>
+                <div class="text-sm font-medium text-gray-800 mb-0.5">生成个性化内容</div>
+                <div class="text-xs text-gray-500">选题和脚本都会基于你的IP信息和知识库生成</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 新建IP面板（默认隐藏） -->
+        <div id="create-ip-panel" class="hidden mb-6 bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <h3 class="font-semibold text-gray-900 mb-4">新建IP</h3>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">IP名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-ip-name" placeholder="如：科技博主小王" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">专业领域</label>
+              <input type="text" id="new-ip-field" placeholder="如：AI应用、职场成长" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">目标受众</label>
+              <input type="text" id="new-ip-audience" placeholder="如：职场新人、创业者" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">内容风格</label>
+              <select id="new-ip-style" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                <option value="professional">专业严谨</option>
+                <option value="casual">轻松口语</option>
+                <option value="humorous">幽默风趣</option>
+                <option value="inspiring">激励鼓舞</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="confirmCreateIp()" class="bg-gray-900 text-white text-sm font-medium rounded-lg px-5 py-2 hover:bg-gray-800 transition-colors">创建</button>
+            <button onclick="hideCreateIpPanel()" class="border border-gray-300 text-gray-700 text-sm font-medium rounded-lg px-5 py-2 hover:bg-gray-50 transition-colors">取消</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- 基础信息 -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="text-base font-semibold text-gray-900 mb-5">基础信息</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">IP名称 <span class="text-red-500">*</span></label>
+                <input type="text" id="ip-name" placeholder="如：科技博主小王" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">专业领域</label>
+                <input type="text" id="ip-field" placeholder="如：AI应用、职场成长、美食" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">目标受众</label>
+                <input type="text" id="ip-audience" placeholder="如：职场新人、创业者、宝妈" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">内容风格</label>
+                <div class="flex flex-wrap gap-2">
+                  <label class="style-tag-ip-style cursor-pointer"><input type="radio" name="ip-style" value="professional" checked class="hidden"><span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 transition-all">专业严谨</span></label>
+                  <label class="style-tag-ip-style cursor-pointer"><input type="radio" name="ip-style" value="casual" class="hidden"><span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 transition-all">轻松口语</span></label>
+                  <label class="style-tag-ip-style cursor-pointer"><input type="radio" name="ip-style" value="humorous" class="hidden"><span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 transition-all">幽默风趣</span></label>
+                  <label class="style-tag-ip-style cursor-pointer"><input type="radio" name="ip-style" value="inspiring" class="hidden"><span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 transition-all">激励鼓舞</span></label>
+                </div>
+              </div>
+            </div>
+            <button onclick="saveIpForm()" class="mt-6 w-full bg-gray-900 text-white font-medium rounded-lg px-4 py-2.5 hover:bg-gray-800 transition-colors shadow-sm">保存基础信息</button>
+          </div>
+
+          <!-- 知识库 -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
+            <h3 class="text-base font-semibold text-gray-900 mb-4">知识库</h3>
+            <div id="knowledge-list" class="flex-1 space-y-3 mb-4 min-h-[80px]"></div>
+            <div class="border-t border-gray-100 pt-4 space-y-3">
+              <input type="text" id="knowledge-title" placeholder="标题（可选）" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+              <textarea id="knowledge-content" rows="3" placeholder="粘贴你的文章、观点、笔记..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
+              <button onclick="addKnowledgeItem()" class="w-full border border-gray-300 text-gray-700 font-medium rounded-lg px-4 py-2 text-sm hover:bg-gray-50 transition-colors">+ 添加到知识库</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 选题库 ===== -->
+      <section id="topics-section" class="section hidden">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-1">选题库</h1>
+          <p class="text-gray-500 text-sm">基于当前IP生成并管理选题</p>
+        </div>
+
+        <!-- 生成控制栏 -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-4">
+          <div class="flex flex-wrap gap-6 items-end">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">平台</label>
+              <div class="flex gap-2">
+                <label class="cursor-pointer"><input type="radio" name="topic-platform" value="xiaohongshu" checked class="hidden peer"><span class="inline-block px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-red-50 peer-checked:text-red-700 peer-checked:border-red-200 transition-all">小红书</span></label>
+                <label class="cursor-pointer"><input type="radio" name="topic-platform" value="douyin" class="hidden peer"><span class="inline-block px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">抖音</span></label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">内容形式</label>
+              <div class="flex gap-2">
+                <label class="cursor-pointer"><input type="radio" name="topic-format" value="口播" checked class="hidden peer"><span class="inline-block px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">口播</span></label>
+                <label class="cursor-pointer"><input type="radio" name="topic-format" value="图文" class="hidden peer"><span class="inline-block px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 transition-all">图文</span></label>
+              </div>
+            </div>
+            <div class="flex gap-2 items-center flex-wrap">
+              <button id="topic-gen-btn" onclick="generateTopics()" class="bg-gray-900 text-white font-medium rounded-lg px-5 py-2.5 hover:bg-gray-800 transition-colors shadow-sm text-sm">生成一批选题</button>
+              <button onclick="clearCurrentTopics()" class="border border-gray-200 text-gray-500 font-medium rounded-lg px-4 py-2.5 hover:bg-gray-50 transition-colors text-sm">清空</button>
+            </div>
+          </div>
+          <!-- 关键词生成行 -->
+          <div class="mt-4 pt-4 border-t border-gray-100 flex gap-2 items-center">
+            <span class="text-xs text-gray-500 shrink-0">关键词生成：</span>
+            <input id="topic-keyword-input" type="text" placeholder="输入关键词，如：副业、减肥、AI工具..." class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" onkeydown="if(event.key==='Enter') generateTopicsByKeyword()">
+            <button id="topic-kw-btn" onclick="generateTopicsByKeyword()" class="shrink-0 bg-blue-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors text-sm">联网生成</button>
+          </div>
+        </div>
+
+        <!-- 搜索 + 筛选栏 -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4 space-y-3">
+          <!-- 搜索框 + 时间筛选 -->
+          <div class="flex gap-3 items-center">
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+              <input id="topic-search-input" type="text" placeholder="搜索选题标题或推荐理由..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" oninput="setTopicSearch(this.value)">
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button onclick="setTopicTimeFilter('all')" id="ttf-all" class="px-2.5 py-1.5 text-xs rounded-lg bg-gray-900 text-white font-medium transition-colors">全部</button>
+              <button onclick="setTopicTimeFilter('today')" id="ttf-today" class="px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">今天</button>
+              <button onclick="setTopicTimeFilter('week')" id="ttf-week" class="px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">本周</button>
+              <button onclick="setTopicTimeFilter('month')" id="ttf-month" class="px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">本月</button>
+            </div>
+          </div>
+          <!-- 平台 + 格式 + 收藏 筛选 -->
+          <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-xs text-gray-400">平台：</span>
+            <button onclick="toggleTopicFilter('platform','all')" id="tf-plat-all" class="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white font-medium transition-colors">全部</button>
+            <button onclick="toggleTopicFilter('platform','xiaohongshu')" id="tf-plat-xhs" class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">小红书</button>
+            <button onclick="toggleTopicFilter('platform','douyin')" id="tf-plat-dy" class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">抖音</button>
+            <span class="text-xs text-gray-300">|</span>
+            <span class="text-xs text-gray-400">格式：</span>
+            <button onclick="toggleTopicFilter('format','all')" id="tf-fmt-all" class="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white font-medium transition-colors">全部</button>
+            <button onclick="toggleTopicFilter('format','口播')" id="tf-fmt-koubo" class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">口播</button>
+            <button onclick="toggleTopicFilter('format','图文')" id="tf-fmt-tuwen" class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">图文</button>
+            <span class="text-xs text-gray-300">|</span>
+            <button onclick="toggleTopicFilter('starred',null)" id="tf-starred" class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors">⭐ 收藏</button>
+            <span id="topic-count" class="ml-auto text-xs text-gray-400"></span>
+          </div>
+        </div>
+
+        <div id="topic-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- ===== 创作 ===== -->
+      <section id="create-section" class="section hidden">
+        <div class="mb-5">
+          <h1 class="text-3xl font-bold text-gray-900 mb-3">内容创作</h1>
+          <div id="create-header-info"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <!-- 左侧参数 -->
+          <div class="space-y-4">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h3 class="text-base font-semibold text-gray-900 mb-4">参数设置</h3>
+              <div class="space-y-4">
+                <div id="param-duration">
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">视频时长</label>
+                  <select id="create-duration" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <option value="60">1分钟（约150字）</option>
+                    <option value="120">2分钟（约300字）</option>
+                    <option value="180" selected>3分钟（约450字）</option>
+                    <option value="300">5分钟（约750字）</option>
+                  </select>
+                </div>
+                <div id="param-wordcount" class="hidden">
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">图文字数</label>
+                  <select id="create-wordcount" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <option value="150">简短版（约150字）</option>
+                    <option value="300" selected>标准版（约300字）</option>
+                    <option value="500">详细版（约500字）</option>
+                    <option value="800">长文版（约800字）</option>
+                  </select>
+                </div>
+                <!-- 写作角度 -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">写作角度 <span class="text-xs text-gray-400 font-normal">API模式生效</span></label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer"><input type="radio" name="create-angle" value="tutorial" class="hidden peer"><span class="block text-center px-2 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900 hover:border-gray-400 transition-all">干货教程</span></label>
+                    <label class="cursor-pointer"><input type="radio" name="create-angle" value="story" class="hidden peer"><span class="block text-center px-2 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900 hover:border-gray-400 transition-all">故事案例</span></label>
+                    <label class="cursor-pointer"><input type="radio" name="create-angle" value="opinion" class="hidden peer"><span class="block text-center px-2 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900 hover:border-gray-400 transition-all">观点输出</span></label>
+                    <label class="cursor-pointer"><input type="radio" name="create-angle" value="trending" class="hidden peer"><span class="block text-center px-2 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:border-gray-900 hover:border-gray-400 transition-all">热点借势</span></label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">生成模式</label>
+                  <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="create-mode" value="demo" checked class="w-4 h-4 text-blue-600">
+                      <span class="text-sm text-gray-700">演示模式</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="create-mode" value="api" class="w-4 h-4 text-blue-600">
+                      <span class="text-sm text-gray-700">API模式</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button id="generate-btn" onclick="generateDraft()" class="mt-5 w-full bg-gray-900 text-white font-medium rounded-lg px-4 py-3 hover:bg-gray-800 transition-colors shadow-sm">生成内容</button>
+            </div>
+
+            <!-- 自定义补充 -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-900">自定义补充</h3>
+                <span class="text-xs text-gray-400">API模式生效</span>
+              </div>
+              <textarea id="custom-prompt" rows="3" placeholder="可选：补充本次额外要求..." class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
+              <p class="mt-2 text-xs text-gray-400">知识库内容会自动注入，无需手动填写</p>
+            </div>
+          </div>
+
+          <!-- 右侧输出 -->
+          <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                <h3 class="text-base font-semibold text-gray-900">生成结果</h3>
+                <div class="flex gap-2 items-center">
+                  <button onclick="copyDraftContent()" class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">复制</button>
+                  <button onclick="generateDraft()" class="text-sm px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">↺ 重新生成</button>
+                  <!-- 优化下拉 -->
+                  <div class="relative">
+                    <button id="refine-menu-btn" onclick="toggleRefineMenu()" class="text-sm px-3 py-1.5 border border-blue-200 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">优化 ▾</button>
+                    <div id="refine-menu" class="hidden absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-lg z-10 py-1">
+                      <button onclick="refineContent('shorten')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">精简版（-30%）</button>
+                      <button onclick="refineContent('expand')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">扩展版（+50%）</button>
+                      <button onclick="refineContent('casual')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">更口语化</button>
+                      <button onclick="refineContent('reangle')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">换个角度</button>
+                      <button onclick="refineContent('reintro')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">重写开头</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="draft-content" contenteditable="true" class="min-h-[320px] bg-gray-50 rounded-lg p-5 text-sm leading-relaxed text-gray-900 whitespace-pre-wrap focus:outline-none focus:ring-2 focus:ring-blue-200" oninput="this.dataset.content=this.textContent">
+                <p class="text-gray-400 italic">请先在选题库选择话题，再点击左侧"生成内容"</p>
+              </div>
+              <div class="mt-2 flex justify-end">
+                <span id="draft-word-count" class="text-xs text-gray-400"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 历史记录 ===== -->
+      <section id="history-section" class="section hidden">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 mb-3">历史记录</h1>
+          <div class="flex gap-2">
+            <button id="history-filter-current" onclick="setHistoryFilter('current')" class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white font-medium transition-colors">当前IP</button>
+            <button id="history-filter-all" onclick="setHistoryFilter('all')" class="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">全部</button>
+          </div>
+        </div>
+        <div id="history-list" class="space-y-4"></div>
+      </section>
+
+      <!-- ===== 设置 ===== -->
+      <section id="settings-section" class="section hidden">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-gray-900 mb-1">API 控制台</h1>
+          <p class="text-gray-500 text-sm">配置大模型接口，解锁真实AI生成能力</p>
+        </div>
+
+        <!-- 连接状态卡片 -->
+        <div id="conn-status-card" class="mb-6 max-w-2xl rounded-xl border p-4 flex items-center gap-4 transition-all">
+          <div id="conn-status-dot" class="w-3 h-3 rounded-full shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <div id="conn-status-title" class="text-sm font-medium text-gray-900"></div>
+            <div id="conn-status-desc" class="text-xs text-gray-500 mt-0.5"></div>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button id="disconnect-btn" onclick="disconnectApi()" class="hidden text-xs px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">断开连接</button>
+            <button id="clear-settings-btn" onclick="clearApiSettings()" class="hidden text-xs px-3 py-1.5 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 transition-colors">清除设置</button>
+          </div>
+        </div>
+
+        <div class="max-w-2xl space-y-5">
+          <!-- API提供商 + Key -->
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 class="text-base font-semibold text-gray-900 mb-5">接口配置</h3>
+
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-gray-700 mb-3">API提供商</label>
+              <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <label class="cursor-pointer">
+                  <input type="radio" name="provider" value="claude" class="hidden peer" onchange="onProviderChange('claude')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">Claude</span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="provider" value="kimi" class="hidden peer" onchange="onProviderChange('kimi')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">Kimi</span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="provider" value="minimax" class="hidden peer" onchange="onProviderChange('minimax')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">MiniMax</span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="provider" value="doubao" class="hidden peer" onchange="onProviderChange('doubao')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">字节豆包</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">API Key</label>
+                <div class="relative">
+                  <input type="password" id="settings-api-key" placeholder="输入你的API密钥" class="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                  <button type="button" onclick="toggleApiKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" title="显示/隐藏">
+                    <span id="api-key-eye">👁</span>
+                  </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-400">🔒 仅保存在本地浏览器 localStorage，不会上传任何服务器</p>
+              </div>
+
+              <!-- 模型选择 -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">模型</label>
+                <div id="model-presets" class="flex flex-wrap gap-2 mb-2"></div>
+                <input type="text" id="settings-model" placeholder="或手动输入模型名称" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                <p id="model-cost-hint" class="mt-1 text-xs text-gray-400"></p>
+              </div>
+
+              <!-- MiniMax 专属参数 -->
+              <div id="minimax-extra-fields" class="hidden space-y-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <div class="text-xs text-blue-600 font-medium mb-2">MiniMax 专属参数</div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Account Name（账号名称）</label>
+                  <input type="text" id="settings-minimax-name" placeholder="如：account01052025" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Group ID（组ID）</label>
+                  <input type="text" id="settings-minimax-group-id" placeholder="如：187315656749645824" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                </div>
+              </div>
+
+              <details class="group" open>
+                <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700 transition-colors list-none flex items-center gap-1">
+                  <span class="group-open:rotate-90 transition-transform inline-block">▶</span> 高级设置（自定义API地址 / 代理）
+                </summary>
+                <div class="mt-3 space-y-4">
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div class="text-xs font-medium text-blue-800 mb-2">💡 推荐配置（已启动本地代理）</div>
+                    <div class="text-xs text-blue-700 space-y-1">
+                      <div>• <strong>API地址</strong>：留空（使用官方Claude API）</div>
+                      <div>• <strong>代理服务器</strong>：填写 <code class="bg-white px-1 rounded">http://localhost:3011/proxy</code></div>
+                      <div>• 本地代理会自动转发请求，解决浏览器跨域问题</div>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">API 地址（可选）</label>
+                    <input type="text" id="settings-base-url" placeholder="留空使用官方API，或填写第三方代理地址" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                    <p class="mt-1 text-xs text-gray-500">如需使用第三方代理，填写完整地址（包含路径）</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">代理服务器地址（推荐填写）</label>
+                    <input type="text" id="settings-proxy-url" placeholder="http://localhost:3011/proxy" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                    <p class="mt-1 text-xs text-gray-500">填写本地代理地址，解决浏览器跨域限制</p>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div class="flex gap-3 items-center mt-5 pt-5 border-t border-gray-100">
+              <button onclick="saveSettingsForm()" class="bg-gray-900 text-white font-medium rounded-lg px-5 py-2.5 hover:bg-gray-800 transition-colors shadow-sm text-sm">保存设置</button>
+              <button id="test-conn-btn" onclick="testConnection()" class="border border-gray-300 text-gray-700 font-medium rounded-lg px-5 py-2.5 hover:bg-gray-50 transition-colors text-sm">测试连接</button>
+            </div>
+          </div>
+
+          <!-- 功能说明卡片 -->
+          <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
+            <div class="text-sm font-medium text-gray-700 mb-3">连接API后，以下功能将升级为真实AI生成</div>
+            <div class="space-y-2">
+              <div class="flex items-start gap-3">
+                <span class="text-base shrink-0">🔥</span>
+                <div>
+                  <div class="text-sm font-medium text-gray-800">选题生成</div>
+                  <div class="text-xs text-gray-500">从固定模板 → 基于你的IP人设和知识库，生成真正个性化的选题</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base shrink-0">✍️</span>
+                <div>
+                  <div class="text-sm font-medium text-gray-800">内容创作</div>
+                  <div class="text-xs text-gray-500">从通用模板 → 融合你的知识库和风格，生成真正属于你的脚本</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-base shrink-0">💡</span>
+                <div>
+                  <div class="text-sm font-medium text-gray-800">演示模式仍可用</div>
+                  <div class="text-xs text-gray-500">没有API Key时，演示模式会用变量化模板生成内容，适合快速体验</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 工作区管理 -->
+          <div class="bg-white rounded-xl border border-red-200 p-5">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">工作区管理</h3>
+            <p class="text-xs text-gray-500 mb-4">清除当前工作区的所有本地数据（IP、知识库、选题、历史记录、API设置）</p>
+            <button onclick="clearWorkspaceData()" class="w-full border border-red-300 text-red-600 font-medium rounded-lg px-4 py-2.5 hover:bg-red-50 transition-colors text-sm">清除当前工作区数据</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+  // 导航点击
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      switchSection(e.currentTarget.dataset.section);
+    });
+  });
+
+  // 新建IP面板
+  function showCreateIpPanel() {
+    document.getElementById('create-ip-panel').classList.remove('hidden');
+    switchSection('ip');
+  }
+  function hideCreateIpPanel() {
+    document.getElementById('create-ip-panel').classList.add('hidden');
+  }
+  function confirmCreateIp() {
+    const name = document.getElementById('new-ip-name').value.trim();
+    const field = document.getElementById('new-ip-field').value.trim();
+    const audience = document.getElementById('new-ip-audience').value.trim();
+    const style = document.getElementById('new-ip-style').value;
+    if (!name) { alert('请填写IP名称'); return; }
+    createIp(name, field, audience, style);
+    hideCreateIpPanel();
+    document.getElementById('new-ip-name').value = '';
+    document.getElementById('new-ip-field').value = '';
+    document.getElementById('new-ip-audience').value = '';
+  }
+</script>
+</body>
+</html>

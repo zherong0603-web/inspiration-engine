@@ -12,28 +12,36 @@ scp -o StrictHostKeyChecking=no \
   "$LOCAL_DIR/script.js" \
   "$LOCAL_DIR/invites.js" \
   "$LOCAL_DIR/proxy.js" \
+  "$LOCAL_DIR/hot-api.js" \
   "$LOCAL_DIR/index.html" \
   "$LOCAL_DIR/login.html" \
   "$LOCAL_DIR/admin.html" \
   "$SERVER:$REMOTE_DIR/"
 
 echo "📂 同步到 nginx 目录..."
-ssh -o StrictHostKeyChecking=no "$SERVER" "cp $REMOTE_DIR/index.html $REMOTE_DIR/script.js $REMOTE_DIR/invites.js $REMOTE_DIR/login.html $REMOTE_DIR/admin.html $REMOTE_DIR/proxy.js $NGINX_DIR/"
+ssh -o StrictHostKeyChecking=no "$SERVER" "cp $REMOTE_DIR/index.html $REMOTE_DIR/script.js $REMOTE_DIR/invites.js $REMOTE_DIR/login.html $REMOTE_DIR/admin.html $REMOTE_DIR/proxy.js $REMOTE_DIR/hot-api.js $NGINX_DIR/"
 
 echo "🔄 重启代理服务器..."
 ssh -o StrictHostKeyChecking=no "$SERVER" "
   # 停掉旧的代理进程
   pkill -f 'node.*proxy.js' 2>/dev/null || true
+  pkill -f 'node.*hot-api.js' 2>/dev/null || true
   sleep 1
-  # 后台启动新代理
+  # 后台启动代理
   cd $REMOTE_DIR
   nohup node proxy.js > proxy.log 2>&1 &
+  nohup node hot-api.js > hot-api.log 2>&1 &
   sleep 1
-  # 验证代理是否启动
+  # 验证
   if ss -tlnp | grep -q 3011; then
     echo '✅ 代理服务器已启动（端口 3011）'
   else
     echo '❌ 代理服务器启动失败，查看 proxy.log'
+  fi
+  if ss -tlnp | grep -q 6688; then
+    echo '✅ 热榜API已启动（端口 6688）'
+  else
+    echo '❌ 热榜API启动失败，查看 hot-api.log'
   fi
 "
 

@@ -599,6 +599,99 @@ function useTopic(id) {
 }
 
 // ============================================================
+// 热点灵感模块
+// ============================================================
+const HOT_API_BASE = 'http://112.124.108.24:6688';
+let hotData = { douyin: [], weibo: [], toutiao: [], baidu: [] };
+let hotLoading = false;
+let hotActiveTab = 'weibo';
+
+async function fetchHotTopics() {
+  if (hotLoading) return;
+  hotLoading = true;
+  renderHotPanel();
+
+  try {
+    const res = await fetch(`${HOT_API_BASE}/all`);
+    if (!res.ok) throw new Error('网络错误');
+    const json = await res.json();
+    if (json.code === 200 && json.data) {
+      json.data.forEach(platform => {
+        if (platform.platform === '抖音') hotData.douyin = platform.data || [];
+        else if (platform.platform === '微博') hotData.weibo = platform.data || [];
+        else if (platform.platform === '头条') hotData.toutiao = platform.data || [];
+        else if (platform.platform === '百度') hotData.baidu = platform.data || [];
+      });
+    }
+  } catch (err) {
+    console.error('热榜获取失败:', err);
+  } finally {
+    hotLoading = false;
+    renderHotPanel();
+  }
+}
+
+function setHotTab(tab) {
+  hotActiveTab = tab;
+  renderHotPanel();
+}
+
+function useHotTopic(title) {
+  // 将热点话题填入关键词输入框并触发生成
+  const input = document.getElementById('topic-keyword-input');
+  if (input) {
+    input.value = title;
+    input.focus();
+    showToast(`已填入"${title.slice(0, 15)}..."，点击联网生成即可`);
+  }
+}
+
+function renderHotPanel() {
+  const container = document.getElementById('hot-panel');
+  if (!container) return;
+
+  const tabs = [
+    { key: 'weibo', label: '微博', color: 'red' },
+    { key: 'douyin', label: '抖音', color: 'blue' },
+    { key: 'toutiao', label: '头条', color: 'orange' },
+    { key: 'baidu', label: '百度', color: 'indigo' },
+  ];
+
+  const tabsHtml = tabs.map(t => {
+    const active = hotActiveTab === t.key;
+    return `<button onclick="setHotTab('${t.key}')" class="px-3 py-1.5 text-xs rounded-lg transition-colors ${active ? 'bg-gray-900 text-white font-medium' : 'border border-gray-300 text-gray-600 hover:bg-gray-50'}">${t.label}</button>`;
+  }).join('');
+
+  const items = hotData[hotActiveTab] || [];
+
+  let listHtml;
+  if (hotLoading) {
+    listHtml = '<div class="py-8 text-center text-sm text-gray-400"><span class="inline-block animate-spin mr-1">⟳</span>加载中...</div>';
+  } else if (items.length === 0) {
+    listHtml = '<div class="py-8 text-center text-sm text-gray-400">点击"刷新热榜"获取实时数据</div>';
+  } else {
+    listHtml = '<div class="space-y-1 max-h-64 overflow-y-auto">' + items.slice(0, 20).map((item, i) => {
+      const rankClass = i < 3 ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600';
+      const hotNum = item.hot > 10000 ? (item.hot / 10000).toFixed(1) + '万' : item.hot;
+      return `<div class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer group transition-colors" onclick="useHotTopic('${escHtml(item.title.replace(/'/g, "\\'"))}')">
+        <span class="w-5 h-5 rounded text-xs font-bold flex items-center justify-center shrink-0 ${rankClass}">${i + 1}</span>
+        <span class="flex-1 text-sm text-gray-800 truncate group-hover:text-gray-900">${escHtml(item.title)}</span>
+        <span class="text-xs text-gray-400 shrink-0">${hotNum}</span>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  container.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex gap-1.5">${tabsHtml}</div>
+      <button onclick="fetchHotTopics()" class="text-xs px-3 py-1.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors ${hotLoading ? 'opacity-50' : ''}">刷新热榜</button>
+    </div>
+    ${listHtml}
+    <p class="mt-2 text-xs text-gray-400 text-center">点击热点话题 → 自动填入关键词 → 生成相关选题</p>
+  `;
+}
+
+// ============================================================
 // 创作模块
 // ============================================================
 function buildPrompt(topicId, platform, format, duration, wordCount, angle) {
@@ -1765,6 +1858,7 @@ function switchSection(section) {
   }
   if (section === 'create') renderCreateHeader();
   if (section === 'history') renderDraftHistory();
+  if (section === 'topics') { renderHotPanel(); fetchHotTopics(); }
 }
 
 // ============================================================

@@ -408,16 +408,16 @@
               <label class="block text-sm font-medium text-gray-700 mb-3">API提供商</label>
               <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <label class="cursor-pointer">
-                  <input type="radio" name="provider" value="claude" class="hidden peer" onchange="onProviderChange('claude')">
-                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">Claude</span>
+                  <input type="radio" name="provider" value="deepseek" class="hidden peer" onchange="onProviderChange('deepseek')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">DeepSeek</span>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="provider" value="kimi" class="hidden peer" onchange="onProviderChange('kimi')">
                   <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">Kimi</span>
                 </label>
                 <label class="cursor-pointer">
-                  <input type="radio" name="provider" value="minimax" class="hidden peer" onchange="onProviderChange('minimax')">
-                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">MiniMax</span>
+                  <input type="radio" name="provider" value="claude" class="hidden peer" onchange="onProviderChange('claude')">
+                  <span class="block text-center px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-700 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-checked:border-blue-200 hover:border-gray-400 transition-all">Claude</span>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" name="provider" value="doubao" class="hidden peer" onchange="onProviderChange('doubao')">
@@ -446,41 +446,15 @@
                 <p id="model-cost-hint" class="mt-1 text-xs text-gray-400"></p>
               </div>
 
-              <!-- MiniMax 专属参数 -->
-              <div id="minimax-extra-fields" class="hidden space-y-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                <div class="text-xs text-blue-600 font-medium mb-2">MiniMax 专属参数</div>
-                <div>
-                  <label class="block text-xs text-gray-600 mb-1">Account Name（账号名称）</label>
-                  <input type="text" id="settings-minimax-name" placeholder="如：account01052025" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-600 mb-1">Group ID（组ID）</label>
-                  <input type="text" id="settings-minimax-group-id" placeholder="如：187315656749645824" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-                </div>
-              </div>
-
-              <details class="group" open>
+              <details class="group">
                 <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700 transition-colors list-none flex items-center gap-1">
-                  <span class="group-open:rotate-90 transition-transform inline-block">▶</span> 高级设置（自定义API地址 / 代理）
+                  <span class="group-open:rotate-90 transition-transform inline-block">▶</span> 高级设置（自定义API地址）
                 </summary>
                 <div class="mt-3 space-y-4">
-                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div class="text-xs font-medium text-blue-800 mb-2">💡 推荐配置（已启动本地代理）</div>
-                    <div class="text-xs text-blue-700 space-y-1">
-                      <div>• <strong>API地址</strong>：留空（使用官方Claude API）</div>
-                      <div>• <strong>代理服务器</strong>：填写 <code class="bg-white px-1 rounded">http://localhost:3011/proxy</code></div>
-                      <div>• 本地代理会自动转发请求，解决浏览器跨域问题</div>
-                    </div>
-                  </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">API 地址（可选）</label>
                     <input type="text" id="settings-base-url" placeholder="留空使用官方API，或填写第三方代理地址" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-                    <p class="mt-1 text-xs text-gray-500">如需使用第三方代理，填写完整地址（包含路径）</p>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">代理服务器地址（推荐填写）</label>
-                    <input type="text" id="settings-proxy-url" placeholder="http://localhost:3011/proxy" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
-                    <p class="mt-1 text-xs text-gray-500">填写本地代理地址，解决浏览器跨域限制</p>
+                    <p class="mt-1 text-xs text-gray-500">一般不需要修改，留空即可</p>
                   </div>
                 </div>
               </details>

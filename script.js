@@ -48,7 +48,7 @@ let state = {
   knowledgeItems: [],
   topicList: [],
   draftHistory: [],
-  apiConfig: { provider: 'claude', apiKey: '', model: '', baseUrl: '' }
+  apiConfig: { provider: 'deepseek', apiKey: '', model: '', baseUrl: '' }
 };
 
 // 当前IP及其数据的便捷访问器
@@ -72,7 +72,7 @@ function loadState() {
   const topicList = JSON.parse(localStorage.getItem(wsKey('topicList')) || '[]');
   const draftHistory = JSON.parse(localStorage.getItem(wsKey('draftHistory')) || '[]');
   const apiConfig = JSON.parse(localStorage.getItem(wsKey('apiConfig')) || 'null') || {
-    provider: 'claude', apiKey: '', model: 'claude-sonnet-4-6', baseUrl: ''
+    provider: 'deepseek', apiKey: '', model: 'deepseek-chat', baseUrl: ''
   };
 
   state.ipList = ipList;
@@ -1011,22 +1011,17 @@ function toggleApiKeyVisibility() {
 // API 层（多 Provider）
 // ============================================================
 const PROVIDER_CONFIG = {
-  claude: {
-    baseUrl: 'https://api.anthropic.com/v1/messages',
-    models: ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001'],
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
     buildRequest(model, prompt, apiKey) {
       return {
         method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({ model, max_tokens: 2048, messages: [{ role: 'user', content: prompt }] })
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.7 })
       };
     },
-    extractText(json) { return json.content[0].text; }
+    extractText(json) { return json.choices[0].message.content; }
   },
   kimi: {
     baseUrl: 'https://api.moonshot.cn/v1/chat/completions',
@@ -1040,17 +1035,21 @@ const PROVIDER_CONFIG = {
     },
     extractText(json) { return json.choices[0].message.content; }
   },
-  minimax: {
-    baseUrl: 'https://api.minimax.chat/v1/text/chatcompletion_v2',
-    models: ['abab6.5s-chat', 'abab5.5-chat'],
+  claude: {
+    baseUrl: 'https://api.anthropic.com/v1/messages',
+    models: ['claude-sonnet-4-20250514', 'claude-haiku-4-20250414'],
     buildRequest(model, prompt, apiKey) {
       return {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] })
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ model, max_tokens: 2048, messages: [{ role: 'user', content: prompt }] })
       };
     },
-    extractText(json) { return json.choices[0].message.content; }
+    extractText(json) { return json.content[0].text; }
   },
   doubao: {
     baseUrl: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
@@ -1059,82 +1058,36 @@ const PROVIDER_CONFIG = {
       return {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiKey}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.7 })
       };
     },
     extractText(json) { return json.choices[0].message.content; }
   }
 };
 
-async function callAI(prompt, timeoutMs = 20000) {
-  const { provider, apiKey, model, baseUrl, proxyUrl: customProxyUrl } = state.apiConfig;
+async function callAI(prompt, timeoutMs = 30000) {
+  const { provider, apiKey, model, baseUrl } = state.apiConfig;
   if (!apiKey) throw new Error('请先在设置中配置API密钥');
   const config = PROVIDER_CONFIG[provider];
   if (!config) throw new Error('未知的API提供商');
 
-  // 如果用户填写了自定义baseUrl，使用它；否则使用默认配置
-  let url = baseUrl && baseUrl.trim() ? baseUrl.trim() : config.baseUrl;
-
-  // 智能补全：如果用户只填了域名没有路径，自动补全Claude API路径
-  if (provider === 'claude' && url && !url.includes('/v1/messages')) {
-    // 移除末尾的斜杠
-    url = url.replace(/\/$/, '');
-    // 如果看起来是个域名（没有路径），自动加上 /v1/messages
-    if (!url.includes('/v1/') && !url.includes('/api/')) {
-      url = url + '/v1/messages';
-    }
-  }
-
+  const targetUrl = baseUrl && baseUrl.trim() ? baseUrl.trim() : config.baseUrl;
   const effectiveModel = model || config.models[0];
   const req = config.buildRequest(effectiveModel, prompt, apiKey);
 
-  // 决定请求方式：
-  // 1. 如果用户明确配置了"代理服务器地址" → 使用该代理（我们的代理格式）
-  // 2. 如果用户填写了自定义 baseUrl → 直接请求该地址（可能是第三方代理或自定义API）
-  // 3. 否则使用默认配置（Claude和Kimi走默认代理，MiniMax/豆包等国内API直接请求）
-  const useCustomProxy = !!customProxyUrl; // 用户明确填写了代理服务器地址
-  const useCustomBaseUrl = baseUrl && baseUrl.trim(); // 用户填写了自定义API地址
-  const useDefaultProxy = !useCustomProxy && !useCustomBaseUrl && (provider === 'claude' || provider === 'kimi');
-  const proxyUrl = customProxyUrl || 'http://112.124.108.24:3011/proxy';
-
-  let fetchUrl, requestOptions;
-
-  if (useCustomProxy || useDefaultProxy) {
-    // 使用我们的代理格式（需要包装请求）
-    fetchUrl = proxyUrl;
-    requestOptions = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        targetUrl: url,
-        headers: req.headers,
-        data: JSON.parse(req.body)
-      })
-    };
-  } else {
-    // 直接请求（包括自定义baseUrl和国内API）
-    let targetUrl = url;
-
-    // MiniMax 需要在 URL 中添加 Name 和 GroupId 参数
-    if (provider === 'minimax') {
-      const { minimaxName, minimaxGroupId } = state.apiConfig;
-      if (minimaxName && minimaxGroupId) {
-        const separator = targetUrl.includes('?') ? '&' : '?';
-        targetUrl = `${targetUrl}${separator}Name=${encodeURIComponent(minimaxName)}&GroupId=${encodeURIComponent(minimaxGroupId)}`;
-      } else {
-        throw new Error('MiniMax API 需要填写 Account Name 和 Group ID，请检查设置');
-      }
-    }
-
-    fetchUrl = targetUrl;
-    requestOptions = {
-      method: req.method,
+  // 所有请求强制走代理，消除 CORS 问题
+  const proxyUrl = 'http://112.124.108.24:3011/proxy';
+  const fetchUrl = proxyUrl;
+  const requestOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      targetUrl: targetUrl,
       headers: req.headers,
-      body: req.body
-    };
-  }
+      data: JSON.parse(req.body)
+    })
+  };
 
-  // 设置超时控制器
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -1144,24 +1097,15 @@ async function callAI(prompt, timeoutMs = 20000) {
 
     if (!res.ok) {
       const errText = await res.text();
-      // 友好的错误提示
-      if (res.status === 401) {
-        throw new Error('API密钥无效，请检查你的API Key是否正确');
-      } else if (res.status === 403) {
-        throw new Error('访问被拒绝，请检查API密钥权限或账户余额');
-      } else if (res.status === 404) {
-        throw new Error('API地址不存在，请检查填写的地址是否正确');
-      } else if (res.status === 429) {
-        throw new Error('请求太频繁，请稍后再试');
-      } else if (res.status >= 500) {
-        throw new Error('服务器出错了，请稍后再试或联系服务商');
-      } else {
-        throw new Error(`连接失败(${res.status})：${errText.slice(0, 100)}`);
-      }
+      if (res.status === 401) throw new Error('API密钥无效，请检查你的API Key是否正确');
+      if (res.status === 403) throw new Error('访问被拒绝，请检查API密钥权限或账户余额');
+      if (res.status === 404) throw new Error('API地址不存在，请检查填写的地址是否正确');
+      if (res.status === 429) throw new Error('请求太频繁，请稍后再试');
+      if (res.status >= 500) throw new Error('服务器出错了，请稍后再试或联系服务商');
+      throw new Error(`连接失败(${res.status})：${errText.slice(0, 100)}`);
     }
 
     const json = await res.json();
-    // 检查API返回的错误
     if (json.error) {
       const errMsg = json.error.message || JSON.stringify(json.error);
       throw new Error(`API返回错误：${errMsg.slice(0, 100)}`);
@@ -1169,54 +1113,40 @@ async function callAI(prompt, timeoutMs = 20000) {
     return config.extractText(json);
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error(`连接超时了（等了${timeoutMs / 1000}秒），可能是网络太慢或代理服务器无响应`);
-    }
-    // 增强网络错误信息
-    if (err.message === 'Failed to fetch' || err.message.includes('NetworkError') || err.message.includes('fetch')) {
-      throw new Error('无法连接到服务器，请检查：1) 网络是否正常 2) API地址是否正确 3) 是否需要代理');
-    }
-    // TypeError (如 JSON.parse 失败)
-    if (err instanceof TypeError && err.message.includes('JSON')) {
-      throw new Error('服务器返回的不是有效数据，可能API地址填错了');
-    }
+    if (err.name === 'AbortError') throw new Error(`连接超时了（等了${timeoutMs / 1000}秒），可能是网络太慢或代理服务器无响应`);
+    if (err.message === 'Failed to fetch' || err.message.includes('NetworkError')) throw new Error('无法连接到代理服务器，请检查网络');
     throw err;
   }
 }
 
 // 流式输出：onChunk(text片段), onDone(fullText), onError(err)
-async function callAIStream(prompt, onChunk, onDone, onError, timeoutMs = 45000) {
-  const { provider, apiKey, model, baseUrl, proxyUrl: customProxyUrl } = state.apiConfig;
+async function callAIStream(prompt, onChunk, onDone, onError, timeoutMs = 60000) {
+  const { provider, apiKey, model, baseUrl } = state.apiConfig;
   if (!apiKey) { onError(new Error('请先在设置中配置API密钥')); return; }
   const config = PROVIDER_CONFIG[provider];
   if (!config) { onError(new Error('未知的API提供商')); return; }
 
-  let url = baseUrl && baseUrl.trim() ? baseUrl.trim() : config.baseUrl;
-  if (provider === 'claude' && url && !url.includes('/v1/messages')) {
-    url = url.replace(/\/$/, '');
-    if (!url.includes('/v1/') && !url.includes('/api/')) url = url + '/v1/messages';
-  }
-
+  const targetUrl = baseUrl && baseUrl.trim() ? baseUrl.trim() : config.baseUrl;
   const effectiveModel = model || config.models[0];
   const req = config.buildRequest(effectiveModel, prompt, apiKey);
 
   // 强制开启 streaming
-  let body = JSON.parse(req.body);
-  body.stream = true;
-  req.body = JSON.stringify(body);
+  let data = JSON.parse(req.body);
+  data.stream = true;
 
-  const useCustomProxy = !!customProxyUrl;
-  const useDefaultProxy = !useCustomProxy && !baseUrl && (provider === 'claude' || provider === 'kimi');
-  let fetchUrl = url;
-  let requestOptions = { method: req.method, headers: req.headers, body: req.body };
-  if (useCustomProxy) {
-    fetchUrl = customProxyUrl;
-    requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, ...JSON.parse(req.body), headers: req.headers }) };
-  } else if (useDefaultProxy) {
-    const proxyUrl = 'http://112.124.108.24:3011/proxy';
-    fetchUrl = proxyUrl;
-    requestOptions = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, ...JSON.parse(req.body), headers: req.headers }) };
-  }
+  // 所有请求强制走代理，格式统一
+  const proxyUrl = 'http://112.124.108.24:3011/proxy';
+  const fetchUrl = proxyUrl;
+  const requestOptions = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      targetUrl: targetUrl,
+      headers: req.headers,
+      data: data,
+      stream: true
+    })
+  };
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -1240,13 +1170,13 @@ async function callAIStream(prompt, onChunk, onDone, onError, timeoutMs = 45000)
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // 保留不完整的行
+      buffer = lines.pop();
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') continue;
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
         try {
-          const json = JSON.parse(data);
+          const json = JSON.parse(dataStr);
           // 兼容 Claude 和 OpenAI 格式
           const chunk = json.delta?.text || json.choices?.[0]?.delta?.content || '';
           if (chunk) { fullText += chunk; onChunk(chunk); }
@@ -1256,8 +1186,8 @@ async function callAIStream(prompt, onChunk, onDone, onError, timeoutMs = 45000)
     onDone(fullText);
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') { onError(new Error(`连接超时了（等了${timeoutMs / 1000}秒），请检查网络或代理`)); return; }
-    if (err.message === 'Failed to fetch' || err.message.includes('fetch')) { onError(new Error('无法连接到服务器，请检查网络或API地址')); return; }
+    if (err.name === 'AbortError') { onError(new Error(`连接超时了（等了${timeoutMs / 1000}秒），请检查网络`)); return; }
+    if (err.message === 'Failed to fetch' || err.message.includes('fetch')) { onError(new Error('无法连接到代理服务器，请检查网络')); return; }
     onError(err);
   }
 }
@@ -1292,7 +1222,7 @@ async function testConnection() {
     return;
   }
 
-  const providerName = { claude: 'Claude', kimi: 'Kimi', minimax: 'MiniMax', doubao: '字节豆包' }[cfg.provider] || cfg.provider;
+  const providerName = { deepseek: 'DeepSeek', claude: 'Claude', kimi: 'Kimi', doubao: '字节豆包' }[cfg.provider] || cfg.provider;
   const modelName = cfg.model || PROVIDER_CONFIG[cfg.provider]?.models[0] || '';
 
   try {
@@ -1336,14 +1266,11 @@ async function testConnection() {
 let connStatus = 'unconfigured';
 let connStatusDetail = '';
 function saveSettingsForm() {
-  const provider = document.querySelector('input[name="provider"]:checked')?.value || 'claude';
+  const provider = document.querySelector('input[name="provider"]:checked')?.value || 'deepseek';
   const apiKey = document.getElementById('settings-api-key').value.trim();
   const model = document.getElementById('settings-model').value.trim();
   const baseUrl = document.getElementById('settings-base-url').value.trim();
-  const proxyUrl = document.getElementById('settings-proxy-url')?.value.trim() || '';
-  const minimaxName = document.getElementById('settings-minimax-name')?.value.trim() || '';
-  const minimaxGroupId = document.getElementById('settings-minimax-group-id')?.value.trim() || '';
-  state.apiConfig = { provider, apiKey, model, baseUrl, proxyUrl, minimaxName, minimaxGroupId };
+  state.apiConfig = { provider, apiKey, model, baseUrl };
   saveApiConfig();
   if (apiKey && connStatus !== 'connected') {
     connStatus = 'saved';
@@ -1361,17 +1288,9 @@ function onProviderChange(provider) {
   if (!config) return;
   const modelEl = document.getElementById('settings-model');
   const baseUrlEl = document.getElementById('settings-base-url');
-  // 强制使用当前 provider 的默认 model
   modelEl.value = config.models[0];
-  // 强制使用当前 provider 的默认 baseUrl
   baseUrlEl.value = config.baseUrl;
   renderModelPresets(provider);
-
-  // MiniMax 需要额外的 Name 和 GroupId 参数
-  const minimaxFields = document.getElementById('minimax-extra-fields');
-  if (minimaxFields) {
-    minimaxFields.classList.toggle('hidden', provider !== 'minimax');
-  }
 }
 
 function renderModelPresets(provider) {
@@ -1382,14 +1301,13 @@ function renderModelPresets(provider) {
   if (!container) return;
 
   const modelMeta = {
-    'claude-sonnet-4-6':        { label: 'Sonnet 4.6', tag: '推荐', hint: '性价比最高，速度快，适合日常创作' },
-    'claude-haiku-4-5-20251001':{ label: 'Haiku 4.5',  tag: '省钱', hint: '最便宜，适合大量生成测试' },
-    'claude-opus-4-6':          { label: 'Opus 4.6',   tag: '更强', hint: '最强但最贵，适合高质量长文' },
+    'deepseek-chat':            { label: 'DeepSeek Chat', tag: '推荐', hint: '性价比极高，中文创作能力强' },
+    'deepseek-reasoner':        { label: 'DeepSeek R1', tag: '更强', hint: '推理能力更强，适合复杂任务' },
     'moonshot-v1-8k':           { label: 'v1-8k',      tag: '推荐', hint: '8K上下文，适合短内容生成' },
     'moonshot-v1-32k':          { label: 'v1-32k',     tag: '长文', hint: '32K上下文，适合长文档处理' },
     'moonshot-v1-128k':         { label: 'v1-128k',    tag: '超长', hint: '128K超长上下文' },
-    'abab6.5s-chat':            { label: 'abab6.5s',   tag: '推荐', hint: '速度快，适合内容创作' },
-    'abab5.5-chat':             { label: 'abab5.5',    tag: '省钱', hint: '更经济的选择' },
+    'claude-sonnet-4-20250514': { label: 'Sonnet 4',   tag: '推荐', hint: '性价比高，速度快' },
+    'claude-haiku-4-20250414':  { label: 'Haiku 4',    tag: '省钱', hint: '最便宜，适合大量生成' },
     'doubao-pro-32k':           { label: 'Pro 32k',    tag: '推荐', hint: '效果好，32K上下文' },
     'doubao-lite-32k':          { label: 'Lite 32k',   tag: '省钱', hint: '更轻量，成本更低' },
   };
@@ -1426,7 +1344,7 @@ function renderConnStatus() {
   const clearBtn = document.getElementById('clear-settings-btn');
 
   const cfg = state.apiConfig;
-  const providerName = { claude: 'Claude', kimi: 'Kimi', minimax: 'MiniMax', doubao: '字节豆包' }[cfg.provider] || cfg.provider;
+  const providerName = { deepseek: 'DeepSeek', claude: 'Claude', kimi: 'Kimi', doubao: '字节豆包' }[cfg.provider] || cfg.provider;
   const modelName = cfg.model || PROVIDER_CONFIG[cfg.provider]?.models[0] || '';
 
   const statusMap = {
@@ -1514,7 +1432,7 @@ function disconnectApi() {
 
 function clearApiSettings() {
   if (!confirm('确定清除所有API设置？')) return;
-  state.apiConfig = { provider: 'claude', apiKey: '', model: 'claude-sonnet-4-6', baseUrl: '' };
+  state.apiConfig = { provider: 'deepseek', apiKey: '', model: 'deepseek-chat', baseUrl: '' };
   saveApiConfig();
   connStatus = 'unconfigured';
   connStatusDetail = '';
@@ -1530,18 +1448,9 @@ function renderSettingsForm() {
   const apiKeyEl = document.getElementById('settings-api-key');
   const modelEl = document.getElementById('settings-model');
   const baseUrlEl = document.getElementById('settings-base-url');
-  const proxyUrlEl = document.getElementById('settings-proxy-url');
-  const minimaxNameEl = document.getElementById('settings-minimax-name');
-  const minimaxGroupIdEl = document.getElementById('settings-minimax-group-id');
-  const minimaxFields = document.getElementById('minimax-extra-fields');
   if (apiKeyEl) apiKeyEl.value = cfg.apiKey || '';
   if (modelEl) modelEl.value = cfg.model || PROVIDER_CONFIG[cfg.provider]?.models[0] || '';
-  // 使用当前 provider 的默认 baseUrl，而不是用户之前保存的（可能是其他 provider 的）
-  if (baseUrlEl) baseUrlEl.value = PROVIDER_CONFIG[cfg.provider]?.baseUrl || '';
-  if (proxyUrlEl) proxyUrlEl.value = cfg.proxyUrl || '';
-  if (minimaxNameEl) minimaxNameEl.value = cfg.minimaxName || '';
-  if (minimaxGroupIdEl) minimaxGroupIdEl.value = cfg.minimaxGroupId || '';
-  if (minimaxFields) minimaxFields.classList.toggle('hidden', cfg.provider !== 'minimax');
+  if (baseUrlEl) baseUrlEl.value = cfg.baseUrl || '';
 
   // 初始化连接状态
   if (!cfg.apiKey) connStatus = 'unconfigured';

@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
   req.on('data', chunk => body += chunk);
   req.on('end', () => {
     try {
-      const { targetUrl, headers, data } = JSON.parse(body);
+      const { targetUrl, headers, data, stream } = JSON.parse(body);
       const parsedUrl = url.parse(targetUrl);
 
       const options = {
@@ -41,12 +41,24 @@ const server = http.createServer((req, res) => {
       };
 
       const proxyReq = https.request(options, proxyRes => {
-        let responseBody = '';
-        proxyRes.on('data', chunk => responseBody += chunk);
-        proxyRes.on('end', () => {
-          res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
-          res.end(responseBody);
-        });
+        if (stream) {
+          // 流式模式：逐块透传 SSE 数据
+          res.writeHead(proxyRes.statusCode, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          });
+          proxyRes.on('data', chunk => res.write(chunk));
+          proxyRes.on('end', () => res.end());
+        } else {
+          // 非流式：收集完整响应后返回
+          let responseBody = '';
+          proxyRes.on('data', chunk => responseBody += chunk);
+          proxyRes.on('end', () => {
+            res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
+            res.end(responseBody);
+          });
+        }
       });
 
       proxyReq.on('error', err => {
